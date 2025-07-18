@@ -70,7 +70,8 @@ function ProductCard({ product, onDelete }: { product: Product, onDelete: (produ
           />
         </div>
         <div className="p-4 space-y-2 flex flex-col flex-grow">
-          <p className="text-sm text-muted-foreground flex-grow">{description}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
+          <div className="flex-grow" />
           <div className="flex items-center gap-2">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
