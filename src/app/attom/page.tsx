@@ -158,6 +158,15 @@ export default function AttomPage() {
                 Discover our curated collection of quantum-inspired gear and accessories.
               </p>
             </div>
+
+            <div className="mb-8 flex flex-wrap justify-center gap-2">
+              <Button variant="outline">Gift Garden</Button>
+              <Button variant="outline">Orgrim</Button>
+              <Button variant="outline">Secondsell</Button>
+              <Button variant="outline">Marco Polo</Button>
+              <Button variant="outline">Printit</Button>
+              <Button variant="outline">Machinehood</Button>
+            </div>
             
             <div className="mb-8 max-w-lg mx-auto">
               <div className="relative">
