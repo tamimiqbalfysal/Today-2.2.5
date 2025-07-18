@@ -30,6 +30,13 @@ function ProductCard({ product }: { product: Product }) {
       description: `${product.authorName} has been added to your cart.`,
     });
   };
+  
+  const price = useMemo(() => {
+    if (!product.content || typeof product.content !== 'string') return '0.00';
+    // Matches a number (integer or float) at the end of the string
+    const priceMatch = product.content.match(/(\d+(\.\d+)?)$/);
+    return priceMatch ? parseFloat(priceMatch[1]).toFixed(2) : '0.00';
+  }, [product.content]);
 
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
@@ -57,7 +64,7 @@ function ProductCard({ product }: { product: Product }) {
             </div>
             <span className="text-sm text-muted-foreground">(4.0)</span>
           </div>
-          <p className="text-2xl font-bold">${product.content}</p>
+          <p className="text-2xl font-bold">${price}</p>
         </div>
       </CardContent>
       <div className="p-4 pt-0">
