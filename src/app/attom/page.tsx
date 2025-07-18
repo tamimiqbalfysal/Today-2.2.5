@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef } from 'react';
@@ -166,6 +167,7 @@ export default function AttomPage() {
               <Button variant="outline">Marco Polo</Button>
               <Button variant="outline">Printit</Button>
               <Button variant="outline">Machinehood</Button>
+              <Button variant="outline">Tribe</Button>
             </div>
             
             <div className="mb-8 max-w-lg mx-auto">
