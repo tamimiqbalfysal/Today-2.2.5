@@ -236,16 +236,24 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                           </Avatar>
                         </Link>
                         <div>
-                            <Link href={profileLink}>
-                                <p className="font-semibold text-lg text-orange-500 hover:underline">{post.authorName || 'Anonymous'}</p>
-                            </Link>
-                            {isLoadingAuthor ? (
-                                <Skeleton className="h-4 w-24 mt-1" />
-                            ) : (
-                                followersCount !== null && (
-                                    <p className="text-sm text-muted-foreground">{followersCount}</p>
-                                )
-                            )}
+                            <div className="flex items-center gap-2">
+                                <Link href={profileLink}>
+                                    <p className="font-semibold text-lg text-orange-500 hover:underline">{post.authorName || 'Anonymous'}</p>
+                                </Link>
+                                {isLoadingAuthor ? (
+                                    <Skeleton className="h-4 w-24" />
+                                ) : (
+                                    followersCount !== null && (
+                                      <>
+                                        <span className="text-muted-foreground">&middot;</span>
+                                        <p className="text-sm text-muted-foreground">{followersCount}</p>
+                                      </>
+                                    )
+                                )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(timestamp, { addSuffix: true })}
+                            </p>
                         </div>
                     </div>
                     <p className="text-xs text-muted-foreground whitespace-nowrap">
