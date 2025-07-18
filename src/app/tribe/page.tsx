@@ -83,15 +83,16 @@ export default function TribePage() {
     if (!db) return;
     setIsLoadingProducts(true);
 
-    const productsQuery = query(collection(db, 'products'), where('category', '==', 'Tribe'));
+    const productsQuery = query(collection(db, 'products'));
 
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
-      const fetchedProducts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Product));
+      const fetchedProducts = snapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Product))
+        .filter(p => p.category === 'Tribe');
       
-      // Sort products on the client-side
       fetchedProducts.sort((a, b) => {
           const aTime = a.createdAt?.toMillis() || 0;
           const bTime = b.createdAt?.toMillis() || 0;
@@ -261,4 +262,5 @@ export default function TribePage() {
       </main>
     </div>
   );
-}
+
+    
