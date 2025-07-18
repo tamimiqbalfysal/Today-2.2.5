@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Star, ShoppingCart, ArrowLeft, Edit, Upload, Save } from 'lucide-react';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 function ProductPageSkeleton() {
   return (
