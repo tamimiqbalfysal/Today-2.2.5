@@ -36,6 +36,7 @@ export interface Post {
   type: 'original' | 'share';
   sharedPostId?: string;
   sharedPost?: Post; // For client-side rendering
+  category?: string;
 }
 
 export interface Comment {

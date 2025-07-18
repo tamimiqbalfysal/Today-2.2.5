@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { collection, onSnapshot, query, where, collectionGroup } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Product } from '@/lib/types';
+import type { Post as Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function ProductCard({ product, onAddToCart }: { product: Product, onAddToCart: (productName: string) => void }) {
@@ -24,8 +24,8 @@ function ProductCard({ product, onAddToCart }: { product: Product, onAddToCart: 
       <CardContent className="p-0">
         <div className="relative">
           <Image
-            src={product.imageUrl}
-            alt={product.name}
+            src={product.mediaURL!}
+            alt={product.authorName}
             width={600}
             height={600}
             className="w-full h-auto aspect-square object-cover"
@@ -33,23 +33,23 @@ function ProductCard({ product, onAddToCart }: { product: Product, onAddToCart: 
         </div>
         <div className="p-4 space-y-2">
           <p className="text-sm text-muted-foreground">{product.category}</p>
-          <h3 className="text-lg font-semibold">{product.name}</h3>
+          <h3 className="text-lg font-semibold">{product.authorName}</h3>
           <div className="flex items-center gap-2">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-5 w-5 ${i < (product.rating ?? 0) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`}
+                  className={`h-5 w-5 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`}
                 />
               ))}
             </div>
-            <span className="text-sm text-muted-foreground">({product.rating?.toFixed(1) ?? 'N/A'})</span>
+            <span className="text-sm text-muted-foreground">(4.0)</span>
           </div>
-          <p className="text-2xl font-bold">${product.price.toFixed(2)}</p>
+          <p className="text-2xl font-bold">${product.content}</p>
         </div>
       </CardContent>
       <div className="p-4 pt-0">
-        <Button className="w-full" onClick={() => onAddToCart(product.name)}>
+        <Button className="w-full" onClick={() => onAddToCart(product.authorName)}>
           <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
         </Button>
       </div>
@@ -71,7 +71,7 @@ export default function AttomPage() {
     if (!db) return;
     setIsLoadingProducts(true);
 
-    const productsQuery = query(collectionGroup(db, 'products'));
+    const productsQuery = query(collection(db, 'posts'), where('category', '==', 'Tribe'));
 
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
       const fetchedProducts = snapshot.docs.map(doc => ({
@@ -79,7 +79,7 @@ export default function AttomPage() {
         ...doc.data()
       } as Product));
       
-      fetchedProducts.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+      fetchedProducts.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
 
       setProducts(fetchedProducts);
       setIsLoadingProducts(false);
@@ -124,7 +124,7 @@ export default function AttomPage() {
     
     if (searchTerm) {
       productsToShow = productsToShow.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+        p.authorName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 

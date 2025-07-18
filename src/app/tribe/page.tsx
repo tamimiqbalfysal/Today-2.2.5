@@ -11,9 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { db, storage } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, doc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import type { Product } from '@/lib/types';
+import type { Post as Product } from '@/lib/types';
 import Image from 'next/image';
 import { Upload, Star, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
@@ -34,32 +34,32 @@ function ProductCard({ product }: { product: Product }) {
       <CardContent className="p-0 flex flex-col flex-grow">
         <div className="relative">
           <Image
-            src={product.imageUrl}
-            alt={product.name}
+            src={product.mediaURL!}
+            alt={product.authorName}
             width={600}
             height={600}
             className="w-full h-auto aspect-square object-cover"
           />
         </div>
         <div className="p-4 space-y-2 flex flex-col flex-grow">
-          <h3 className="text-lg font-semibold">{product.name}</h3>
-          <p className="text-sm text-muted-foreground flex-grow">{product.description}</p>
+          <h3 className="text-lg font-semibold">{product.authorName}</h3>
+          <p className="text-sm text-muted-foreground flex-grow">{product.content.substring(0, product.content.indexOf('\n'))}</p>
           <div className="flex items-center gap-2">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-5 w-5 ${i < (product.rating ?? 0) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`}
+                  className={`h-5 w-5 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`}
                 />
               ))}
             </div>
-            <span className="text-sm text-muted-foreground">({product.rating?.toFixed(1) ?? 'N/A'})</span>
+            <span className="text-sm text-muted-foreground">(4.0)</span>
           </div>
-          <p className="text-2xl font-bold">${product.price.toFixed(2)}</p>
+          <p className="text-2xl font-bold">${product.content.substring(product.content.indexOf('\n') + 1)}</p>
         </div>
       </CardContent>
       <div className="p-4 pt-0 mt-auto">
-        <Button className="w-full" onClick={() => handleAddToCart(product.name)}>
+        <Button className="w-full" onClick={() => handleAddToCart(product.authorName)}>
           <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
         </Button>
       </div>
@@ -85,7 +85,12 @@ export default function TribePage() {
     if (!db || !user) return;
     setIsLoadingProducts(true);
   
-    const productsQuery = query(collection(db, `users/${user.uid}/products`), orderBy('createdAt', 'desc'));
+    const productsQuery = query(
+        collection(db, 'posts'), 
+        where('authorId', '==', user.uid),
+        where('category', '==', 'Tribe'),
+        orderBy('timestamp', 'desc')
+    );
   
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
       const fetchedProducts = snapshot.docs.map(doc => ({
@@ -137,18 +142,19 @@ export default function TribePage() {
       await uploadBytes(storageRef, imageFile);
       const imageUrl = await getDownloadURL(storageRef);
 
-      const productsCollectionRef = collection(db, `users/${user.uid}/products`);
-      await addDoc(productsCollectionRef, {
-        userId: user.uid,
-        name: productName,
-        description,
-        price: parseFloat(price),
-        imageUrl,
+      const postsCollectionRef = collection(db, `posts`);
+      await addDoc(postsCollectionRef, {
+        authorId: user.uid,
+        authorName: productName, // Using product name as authorName for display
+        authorPhotoURL: user.photoURL,
+        content: `${description}\n${parseFloat(price)}`, // Storing description and price in content
+        timestamp: Timestamp.now(),
+        likes: [],
+        comments: [],
+        mediaURL: imageUrl,
+        mediaType: 'image',
+        type: 'original',
         category: 'Tribe',
-        sellerId: user.uid,
-        sellerName: user.name,
-        createdAt: serverTimestamp(),
-        rating: Math.random() * 2 + 3, // Random rating between 3 and 5
       });
       
       toast({ title: 'Success!', description: 'Your product has been listed for sale.' });
