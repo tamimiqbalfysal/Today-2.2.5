@@ -12,7 +12,7 @@ import { Star, ShoppingCart, Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { collection, onSnapshot, query, where, collectionGroup } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, collectionGroup, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Post as Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -82,16 +82,14 @@ export default function AttomPage() {
     if (!db) return;
     setIsLoadingProducts(true);
 
-    const productsQuery = query(collection(db, 'posts'), where('category', '==', 'Tribe'));
+    const productsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
 
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
       const fetchedProducts = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      } as Product));
+      } as Product)).filter(p => p.category === 'Tribe');
       
-      fetchedProducts.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
-
       setProducts(fetchedProducts);
       setIsLoadingProducts(false);
     }, (error) => {
@@ -127,9 +125,13 @@ export default function AttomPage() {
         p.authorName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
+    
+    if (activeFilter) {
+      productsToShow = productsToShow.filter(p => p.category === activeFilter);
+    }
 
     return productsToShow;
-  }, [products, searchTerm]);
+  }, [products, searchTerm, activeFilter]);
   
   const handleFilterClick = (filter: string) => {
     if (activeFilter === filter) {
