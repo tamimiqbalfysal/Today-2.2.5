@@ -1,9 +1,15 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // Default rule: Allow read and write access for all authenticated users.
+    // This is useful for development but should be replaced with more
+    // granular rules for production.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
     // UTILITY FUNCTIONS
     function isSignedIn() {
       return request.auth != null;
@@ -15,20 +21,11 @@ service cloud.firestore {
     
     // USERS
     match /users/{userId} {
-      // Allow anyone who is signed in to view any user's profile.
-      // This is needed for features like user search and profile pages.
       allow read: if isSignedIn();
-
-      // Allow a user to create their own document.
       allow create: if isOwner(userId);
-
-      // Allow a user to update their own document.
       allow update: if isOwner(userId);
-
-      // Allow a user to delete their own document.
       allow delete: if isOwner(userId);
 
-      // Nested notifications collection
       match /notifications/{notificationId} {
         allow read, write: if isOwner(userId);
       }
@@ -36,42 +33,26 @@ service cloud.firestore {
     
     // USERNAMES
     match /usernames/{username} {
-      // Allow anyone signed in to check if a username exists (read).
       allow read: if isSignedIn();
-      
-      // Allow a user to create their own username document during signup.
-      // We verify the UID in the document matches the authenticated user.
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
-      
-      // Allow a user to delete their own username document.
       allow delete: if isOwner(resource.data.uid);
     }
     
     // POSTS
     match /posts/{postId} {
-      // Anyone signed in can read any post.
       allow read: if isSignedIn();
-      
-      // Users can create posts if they are the author.
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-
-      // Users can update their own posts (e.g., for likes, comments).
-      // We also need to allow updates from other users for the `likes` array.
       allow update: if isSignedIn();
-
-      // Users can only delete their own posts.
       allow delete: if isSignedIn() && isOwner(resource.data.authorId);
     }
     
     // GIFT & THINK CODES
     match /giftCodes/{codeId} {
-      allow read, update: if isSignedIn();
-      allow create: if isSignedIn(); // Allow admin/dev to create codes
+      allow read, write: if isSignedIn();
     }
     
     match /thinkCodes/{codeId} {
-      allow read, update: if isSignedIn();
-      allow create: if isSignedIn(); // Allow admin/dev to create codes
+      allow read, write: if isSignedIn();
     }
   }
 }
