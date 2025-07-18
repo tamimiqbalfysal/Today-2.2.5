@@ -29,6 +29,9 @@ function ProductCard({ product }: { product: Product }) {
     });
   };
 
+  const price = product.content.substring(product.content.indexOf('\n') + 1);
+  const description = product.content.substring(0, product.content.indexOf('\n'));
+
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col">
       <CardContent className="p-0 flex flex-col flex-grow">
@@ -43,7 +46,7 @@ function ProductCard({ product }: { product: Product }) {
         </div>
         <div className="p-4 space-y-2 flex flex-col flex-grow">
           <h3 className="text-lg font-semibold">{product.authorName}</h3>
-          <p className="text-sm text-muted-foreground flex-grow">{product.content.substring(0, product.content.indexOf('\n'))}</p>
+          <p className="text-sm text-muted-foreground flex-grow">{description}</p>
           <div className="flex items-center gap-2">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
@@ -55,7 +58,7 @@ function ProductCard({ product }: { product: Product }) {
             </div>
             <span className="text-sm text-muted-foreground">(4.0)</span>
           </div>
-          <p className="text-2xl font-bold">${product.content.substring(product.content.indexOf('\n') + 1)}</p>
+          <p className="text-2xl font-bold">${price}</p>
         </div>
       </CardContent>
       <div className="p-4 pt-0 mt-auto">
@@ -84,33 +87,31 @@ export default function TribePage() {
   useEffect(() => {
     if (!db || !user) return;
     setIsLoadingProducts(true);
-  
+
     const productsQuery = query(
-        collection(db, 'posts'), 
+        collection(db, 'posts'),
         where('authorId', '==', user.uid),
-        where('category', '==', 'Tribe'),
         orderBy('timestamp', 'desc')
     );
-  
+
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
-      const fetchedProducts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Product));
-      
-      setProducts(fetchedProducts);
-      setIsLoadingProducts(false);
+        const fetchedProducts = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Product))
+            .filter(product => product.category === 'Tribe'); // Filter for 'Tribe' category on the client
+
+        setProducts(fetchedProducts);
+        setIsLoadingProducts(false);
     }, (error) => {
-      console.error("Error fetching products:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not load your listed products.",
-        duration: 10000,
-      });
-      setIsLoadingProducts(false);
+        console.error("Error fetching products:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not load your listed products. Please check your Firestore security rules if this persists.",
+            duration: 10000,
+        });
+        setIsLoadingProducts(false);
     });
-  
+
     return () => unsubscribe();
   }, [user, toast]);
 
@@ -145,9 +146,9 @@ export default function TribePage() {
       const postsCollectionRef = collection(db, `posts`);
       await addDoc(postsCollectionRef, {
         authorId: user.uid,
-        authorName: productName, // Using product name as authorName for display
+        authorName: productName,
         authorPhotoURL: user.photoURL,
-        content: `${description}\n${parseFloat(price)}`, // Storing description and price in content
+        content: `${description}\n${parseFloat(price)}`,
         timestamp: Timestamp.now(),
         likes: [],
         comments: [],
@@ -159,7 +160,6 @@ export default function TribePage() {
       
       toast({ title: 'Success!', description: 'Your product has been listed for sale.' });
       
-      // Reset form
       setProductName('');
       setDescription('');
       setPrice('');
