@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useAuth } from '@/components/auth/auth-guard';
+import { useAuth } from '@/contexts/auth-context';
 import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -171,89 +171,85 @@ export default function TribePage() {
 
 
   return (
-    <AuthGuard>
-      <div className="flex flex-col min-h-screen bg-background">
-        <Header />
-        <main className="flex-1 overflow-y-auto container mx-auto px-4 py-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-primary">
-              The Tribe Marketplace
-            </h1>
-            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Sell your unique creations to the community.
-            </p>
-             <Button asChild className="mt-8" variant="outline">
-              <Link href="/attom">Go Back to the Store</Link>
-            </Button>
-          </div>
+    <div className="flex flex-col min-h-screen bg-background">
+      <Header />
+      <main className="flex-1 overflow-y-auto container mx-auto px-4 py-8">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-primary">
+            The Tribe Marketplace
+          </h1>
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+            Sell your unique creations to the community.
+          </p>
+           <Button asChild className="mt-8" variant="outline">
+            <Link href="/attom">Go Back to the Store</Link>
+          </Button>
+        </div>
 
-          <div className="grid md:grid-cols-2 gap-12">
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>List a New Product</CardTitle>
-                  <CardDescription>Fill in the details below to add your item to the marketplace.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleFormSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="product-name">Product Name</Label>
-                      <Input id="product-name" value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Quantum Entangled Socks" disabled={isSubmitting} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe your product in detail..." disabled={isSubmitting} />
-                    </div>
-                     <div className="space-y-2">
-                      <Label htmlFor="price">Price (USD)</Label>
-                      <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g., 19.99" min="0.01" step="0.01" disabled={isSubmitting} />
-                    </div>
-                    <div className="space-y-2">
-                       <Label>Product Image</Label>
-                       <Input id="file-upload" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" disabled={isSubmitting}/>
-                       <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isSubmitting}>
-                         <Upload className="mr-2 h-4 w-4" />
-                         {imageFile ? 'Change Image' : 'Upload Image'}
-                       </Button>
-                       {imagePreview && (
-                         <div className="mt-4 relative w-full aspect-video rounded-md border overflow-hidden">
-                           <Image src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" />
-                         </div>
-                       )}
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? 'Listing...' : 'List Product'}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="space-y-6">
-               <h2 className="text-3xl font-bold tracking-tight">Available in Tribe</h2>
-               {isLoadingProducts ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <Card><CardContent className="p-4"><div className="animate-pulse space-y-4"><div className="h-40 bg-muted rounded-md"></div><div className="h-6 w-3/4 bg-muted rounded-md"></div><div className="h-4 w-1/2 bg-muted rounded-md"></div><div className="h-8 w-full bg-muted rounded-md"></div></div></CardContent></Card>
-                    <Card><CardContent className="p-4"><div className="animate-pulse space-y-4"><div className="h-40 bg-muted rounded-md"></div><div className="h-6 w-3/4 bg-muted rounded-md"></div><div className="h-4 w-1/2 bg-muted rounded-md"></div><div className="h-8 w-full bg-muted rounded-md"></div></div></CardContent></Card>
+        <div className="grid md:grid-cols-2 gap-12">
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>List a New Product</CardTitle>
+                <CardDescription>Fill in the details below to add your item to the marketplace.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleFormSubmit} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="product-name">Product Name</Label>
+                    <Input id="product-name" value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Quantum Entangled Socks" disabled={isSubmitting} />
                   </div>
-               ) : products.length > 0 ? (
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {products.map(product => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                 </div>
-               ) : (
-                <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
-                  <h3 className="text-lg font-semibold">No products yet!</h3>
-                  <p>Be the first to list a product in the Tribe.</p>
-                </div>
-               )}
-            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe your product in detail..." disabled={isSubmitting} />
+                  </div>
+                   <div className="space-y-2">
+                    <Label htmlFor="price">Price (USD)</Label>
+                    <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g., 19.99" min="0.01" step="0.01" disabled={isSubmitting} />
+                  </div>
+                  <div className="space-y-2">
+                     <Label>Product Image</Label>
+                     <Input id="file-upload" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" disabled={isSubmitting}/>
+                     <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isSubmitting}>
+                       <Upload className="mr-2 h-4 w-4" />
+                       {imageFile ? 'Change Image' : 'Upload Image'}
+                     </Button>
+                     {imagePreview && (
+                       <div className="mt-4 relative w-full aspect-video rounded-md border overflow-hidden">
+                         <Image src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" />
+                       </div>
+                     )}
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? 'Listing...' : 'List Product'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
           </div>
-        </main>
-      </div>
-    </AuthGuard>
+          
+          <div className="space-y-6">
+             <h2 className="text-3xl font-bold tracking-tight">Available in Tribe</h2>
+             {isLoadingProducts ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <Card><CardContent className="p-4"><div className="animate-pulse space-y-4"><div className="h-40 bg-muted rounded-md"></div><div className="h-6 w-3/4 bg-muted rounded-md"></div><div className="h-4 w-1/2 bg-muted rounded-md"></div><div className="h-8 w-full bg-muted rounded-md"></div></div></CardContent></Card>
+                  <Card><CardContent className="p-4"><div className="animate-pulse space-y-4"><div className="h-40 bg-muted rounded-md"></div><div className="h-6 w-3/4 bg-muted rounded-md"></div><div className="h-4 w-1/2 bg-muted rounded-md"></div><div className="h-8 w-full bg-muted rounded-md"></div></div></CardContent></Card>
+                </div>
+             ) : products.length > 0 ? (
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {products.map(product => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+               </div>
+             ) : (
+              <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
+                <h3 className="text-lg font-semibold">No products yet!</h3>
+                <p>Be the first to list a product in the Tribe.</p>
+              </div>
+             )}
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }
-
-    
