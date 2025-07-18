@@ -314,7 +314,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="ghost" size="icon">
-                                        <Trash2 className="h-6 w-6 text-black" />
+                                        <Trash2 className="h-6 w-6" />
                                     </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
