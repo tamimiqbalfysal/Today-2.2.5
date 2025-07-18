@@ -83,13 +83,21 @@ export default function TribePage() {
     if (!db) return;
     setIsLoadingProducts(true);
 
-    const productsQuery = query(collection(db, 'products'), where('category', '==', 'Tribe'), orderBy('createdAt', 'desc'));
+    const productsQuery = query(collection(db, 'products'), where('category', '==', 'Tribe'));
 
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
       const fetchedProducts = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as Product));
+      
+      // Sort products on the client-side
+      fetchedProducts.sort((a, b) => {
+          const aTime = a.createdAt?.toMillis() || 0;
+          const bTime = b.createdAt?.toMillis() || 0;
+          return bTime - aTime;
+      });
+
       setProducts(fetchedProducts);
       setIsLoadingProducts(false);
     }, (error) => {
@@ -97,7 +105,8 @@ export default function TribePage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Could not load products.",
+        description: "Could not load products. If the issue persists, you may need to add a Firestore index.",
+        duration: 10000,
       });
       setIsLoadingProducts(false);
     });
