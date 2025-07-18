@@ -80,7 +80,7 @@ export default function ProductDetailPage() {
           setProduct(productData);
 
           const priceMatch = productData.content.match(/(\d+(\.\d+)?)$/);
-          const price = priceMatch ? parseFloat(priceMatch[1]).toFixed(2) : '0.00';
+          const price = priceMatch ? parseFloat(priceMatch[1]).toFixed(0) : '0';
           const description = priceMatch ? productData.content.substring(0, priceMatch.index).trim() : productData.content;
           
           setEditedName(productData.authorName);
@@ -104,9 +104,9 @@ export default function ProductDetailPage() {
   
   const price = useMemo(() => {
     if (isEditing) return editedPrice;
-    if (!product?.content || typeof product.content !== 'string') return '0.00';
+    if (!product?.content || typeof product.content !== 'string') return '0';
     const priceMatch = product.content.match(/(\d+(\.\d+)?)$/);
-    return priceMatch ? parseFloat(priceMatch[1]).toFixed(2) : '0.00';
+    return priceMatch ? parseFloat(priceMatch[1]).toFixed(0) : '0';
   }, [product?.content, isEditing, editedPrice]);
   
   const description = useMemo(() => {
@@ -167,7 +167,7 @@ export default function ProductDetailPage() {
         }
 
         const productRef = doc(db, 'posts', product.id);
-        const updatedContent = `${editedDescription}\n${parseFloat(editedPrice) || 0}`;
+        const updatedContent = `${editedDescription}\n${parseInt(editedPrice) || 0}`;
 
         await updateDoc(productRef, {
             authorName: editedName,
