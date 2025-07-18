@@ -87,7 +87,7 @@ function ProductCard({ product, onDelete }: { product: Product, onDelete: (produ
         </div>
       </CardContent>
       <div className="p-4 pt-0 mt-auto">
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2">
             <Button variant="outline" className="w-full">
               <Info className="mr-2 h-4 w-4" /> Details
             </Button>

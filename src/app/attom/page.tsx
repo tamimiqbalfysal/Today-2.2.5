@@ -33,7 +33,6 @@ function ProductCard({ product }: { product: Product }) {
   
   const price = useMemo(() => {
     if (!product.content || typeof product.content !== 'string') return '0.00';
-    // Matches a number (integer or float) at the end of the string
     const priceMatch = product.content.match(/(\d+(\.\d+)?)$/);
     return priceMatch ? parseFloat(priceMatch[1]).toFixed(2) : '0.00';
   }, [product.content]);
@@ -68,7 +67,7 @@ function ProductCard({ product }: { product: Product }) {
         </div>
       </CardContent>
       <div className="p-4 pt-0">
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2">
             <Button variant="outline" className="w-full">
               <Info className="mr-2 h-4 w-4" /> Details
             </Button>
@@ -87,7 +86,7 @@ export default function AttomPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilters, setActiveFilters] = useState<string[]>(['Tribe']);
+  const [activeFilters, setActiveFilters] = useState<string[]>(['Tribe', 'Gift Garden']);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
 
@@ -138,8 +137,7 @@ export default function AttomPage() {
     if (activeFilters.length > 0) {
         productsToShow = productsToShow.filter(p => activeFilters.includes(p.category || ''));
     } else {
-        // If no filters are active, show nothing. Or show all? Let's show all for now.
-        productsToShow = products;
+        productsToShow = [];
     }
 
     if (searchTerm) {
