@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -146,7 +147,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const usernameDoc = await transaction.get(usernameDocRef);
 
             if (usernameDoc.exists()) {
-                throw new Error("Username is already taken.");
+                const error = new Error("Username is already taken.");
+                (error as any).code = 'auth/username-already-in-use';
+                throw error;
             }
             
             const userDocRef = doc(db, "users", firebaseUser.uid);
@@ -173,10 +176,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.error("CRITICAL: Failed to roll back user creation. Manual cleanup required for user:", firebaseUser.uid, deleteError);
         });
 
-        if (error.message === "Username is already taken.") {
-             const newError = new Error(error.message);
-             (newError as any).code = 'auth/username-already-in-use';
-             throw newError;
+        if (error.code === "auth/username-already-in-use") {
+             throw error;
         } else {
             const newError = new Error("Your account was created, but we failed to save your profile. Please check your Firestore security rules to allow writes to the 'users' and 'usernames' collections.");
             (newError as any).code = 'auth/firestore-setup-failed';
