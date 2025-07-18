@@ -267,11 +267,11 @@ export default function ProductDetailPage() {
                     {[...Array(5)].map((_, i) => (
                         <Star
                         key={i}
-                        className={`h-5 w-5 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`}
+                        className="h-5 w-5 text-muted-foreground"
                         />
                     ))}
                     </div>
-                    <span className="text-sm text-muted-foreground">(123 reviews)</span>
+                    <span className="text-sm text-muted-foreground">(0 Review)</span>
                 </div>
               
                 {isEditing ? (
