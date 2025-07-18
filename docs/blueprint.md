@@ -1,18 +1,18 @@
-# **App Name**: TipSplitter
+# **App Name**: GitGrab
 
 ## Core Features:
 
-- Amount Input: Input bill amount, tip percentage, and number of people.
-- Tip Display: Display the tip amount per person.
-- Total Per Person Display: Display the total amount due per person (bill + tip).
-- Tip Suggestion: AI tool suggests appropriate tip percentages based on user location and service quality (user inputs service quality feedback).
+- Repository URL Input: Input field for GitHub repository URL.
+- Clone Trigger: Button to trigger the git clone command on the provided URL.
+- Clone Status: Status indicator displaying clone progress (e.g., 'Cloning...', 'Clone complete', 'Error').
+- Repo Validation: AI-powered validation to pre-check that the URL refers to a valid, accessible, cloneable, repo, displayed using a tool.
 
 ## Style Guidelines:
 
-- Primary color: Vivid pink (#FF69B4) for a fun and energetic feel.
-- Background color: Light purple (#E6E6FA), desaturated for softness.
-- Accent color: A slightly warmer pink (#FF77A8), differing in saturation to add visual interest for calls to action.
-- Font: 'Poppins' sans-serif, suitable for a fashionable look. Note: currently only Google Fonts are supported.
-- Use bill and user icons that match the overall aesthetic.
-- Clean and simple layout with clear sections for input and output.
-- Subtle animations or transitions on calculations and display updates.
+- Primary color: Dark grayish blue (#5c6bc0) to evoke reliability and trustworthiness, without being a cliche.
+- Background color: Very dark grayish blue (#263238). It maintains the dark theme with minimal saturation.
+- Accent color: Vibrant yellow (#fbc02d), offset from the primary by around 30 degrees, to highlight interactive elements.
+- Body and headline font: 'Inter', a grotesque-style sans-serif font that provides a neutral, objective feel suitable for a utility application.
+- Simple, monochrome icons for indicating clone status and feedback messages.
+- Clean, centered layout for input and status display to improve UX.
+- Subtle loading animation during cloning process to indicate activity.

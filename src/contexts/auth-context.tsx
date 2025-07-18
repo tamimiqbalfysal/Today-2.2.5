@@ -1,0 +1,246 @@
+'use client';
+
+import type { ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, updateProfile, deleteUser, reauthenticateWithCredential, EmailAuthProvider, type User as FirebaseUser } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, onSnapshot, getDoc, runTransaction, collection, query, orderBy, Unsubscribe, updateDoc, writeBatch } from 'firebase/firestore';
+import type { User as AppUser, Notification } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+
+interface AuthContextType {
+  user: AppUser | null;
+  loading: boolean;
+  login: (email: string, password:string) => Promise<void>;
+  logout: () => Promise<void>;
+  signup: (name: string, username: string, email: string, password: string, country: string) => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!auth || !db) {
+      setLoading(false);
+      return;
+    }
+
+    let unsubscribe: Unsubscribe | null = null;
+    let unsubscribeNotifications: Unsubscribe | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      if (unsubscribe) unsubscribe();
+      if (unsubscribeNotifications) unsubscribeNotifications();
+
+      unsubscribe = null;
+      unsubscribeNotifications = null;
+      
+      if (firebaseUser) {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+
+        unsubscribe = onSnapshot(userDocRef, (userDoc) => {
+          if (!userDoc.exists()) {
+            console.warn(`User document for UID ${firebaseUser.uid} not found.`);
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+
+          const userData = userDoc.data();
+          const notificationsRef = collection(db, `users/${firebaseUser.uid}/notifications`);
+          const q = query(notificationsRef, orderBy('timestamp', 'desc'));
+
+          unsubscribeNotifications = onSnapshot(q, (snapshot) => {
+            const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+            const unreadNotifications = notifications.some(n => !n.read);
+            
+            setUser({
+              uid: firebaseUser.uid,
+              name: firebaseUser.displayName || userData.name,
+              username: userData.username,
+              email: firebaseUser.email || userData.email,
+              photoURL: firebaseUser.photoURL || userData.photoURL,
+              redeemedGiftCodes: userData.redeemedGiftCodes || 0,
+              redeemedThinkCodes: userData.redeemedThinkCodes || 0,
+              paymentCategory: userData.paymentCategory,
+              paymentAccountName: userData.paymentAccountName,
+              paymentAccountNumber: userData.paymentAccountNumber,
+              paymentNotes: userData.paymentNotes,
+              country: userData.country,
+              credits: userData.credits || 0,
+              notifications: notifications,
+              unreadNotifications: unreadNotifications
+            });
+            setLoading(false);
+          }, (error) => {
+            console.error("Error fetching notifications:", error);
+            setLoading(false);
+          });
+
+        }, (error) => {
+          console.error("Error fetching user document:", error);
+          if (error.code === 'permission-denied') {
+            toast({
+              variant: 'destructive',
+              title: 'User Profile Error',
+              description: "Could not load your user profile. Your security rules must allow reads on the 'users' collection.",
+              duration: 10000
+            });
+          }
+          setLoading(false);
+        });
+
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribe) unsubscribe();
+      if (unsubscribeNotifications) unsubscribeNotifications();
+    };
+  }, [toast]);
+
+  const login = async (email: string, password: string) => {
+    if (!auth) {
+        const error = new Error("Firebase is not configured. Please add your Firebase project configuration to a .env file.");
+        (error as any).code = 'auth/firebase-not-configured';
+        throw error;
+    }
+    await signInWithEmailAndPassword(auth, email, password);
+    router.push('/');
+  };
+
+  const signup = async (name: string, username: string, email: string, password: string, country: string) => {
+    if (!auth || !db) {
+        const error = new Error("Firebase is not configured. Please add your Firebase project configuration to a .env file.");
+        (error as any).code = 'auth/firebase-not-configured';
+        throw error;
+    }
+
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+
+    const photoURL = `https://placehold.co/100x100.png?text=${name.charAt(0)}`;
+    
+    await updateProfile(firebaseUser, { 
+      displayName: name,
+      photoURL: photoURL
+    });
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const lowerCaseUsername = username.toLowerCase();
+            const usernameDocRef = doc(db, "usernames", lowerCaseUsername);
+            const usernameDoc = await transaction.get(usernameDocRef);
+
+            if (usernameDoc.exists()) {
+                throw new Error("Username is already taken.");
+            }
+            
+            const userDocRef = doc(db, "users", firebaseUser.uid);
+            transaction.set(userDocRef, {
+                uid: firebaseUser.uid,
+                name: name,
+                username: lowerCaseUsername,
+                email: email,
+                photoURL: photoURL,
+                country: country,
+                redeemedGiftCodes: 0,
+                redeemedThinkCodes: 0,
+                credits: 0,
+                unreadNotifications: false,
+            });
+            transaction.set(usernameDocRef, { uid: firebaseUser.uid });
+        });
+    } catch (error: any) {
+        console.error("CRITICAL: Failed to create user documents in transaction. Original error:", error);
+        await deleteUser(firebaseUser).catch(deleteError => {
+            console.error("CRITICAL: Failed to roll back user creation. Manual cleanup required for user:", firebaseUser.uid, deleteError);
+        });
+
+        if (error.message === "Username is already taken.") {
+             const newError = new Error(error.message);
+             (newError as any).code = 'auth/username-already-in-use';
+             throw newError;
+        } else {
+            const newError = new Error("Your account was created, but we failed to save your profile. Please check your Firestore security rules to allow writes to the 'users' and 'usernames' collections.");
+            (newError as any).code = 'auth/firestore-setup-failed';
+            throw newError;
+        }
+    }
+    
+    router.push('/');
+  };
+
+  const logout = async () => {
+    if (!auth) {
+      setUser(null);
+      router.push('/login');
+      return;
+    };
+    await signOut(auth);
+    router.push('/login');
+  };
+
+  const deleteAccount = async (password: string) => {
+    const currentUser = auth?.currentUser;
+    const currentUserData = user;
+    if (!auth || !currentUser || !db || !currentUserData) {
+      throw new Error("User not found or Firebase not configured.");
+    }
+    
+    try {
+      if (!currentUser.email) {
+        throw new Error("Cannot re-authenticate user without an email address.");
+      }
+      const credential = EmailAuthProvider.credential(currentUser.email, password);
+      await reauthenticateWithCredential(currentUser, credential);
+
+      await runTransaction(db, async (transaction) => {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        transaction.delete(userDocRef);
+
+        if (currentUserData.username) {
+            const usernameDocRef = doc(db, 'usernames', currentUserData.username.toLowerCase());
+            transaction.delete(usernameDocRef);
+        }
+      });
+      
+      await deleteUser(currentUser);
+      router.push('/login');
+    } catch (error: any) {
+      console.error("Error deleting account:", error);
+      if (error.code === 'auth/wrong-password') {
+        throw new Error("The password you entered is incorrect. Please try again.");
+      }
+      throw error;
+    }
+  };
+
+
+  const value = { user, loading, login, logout, signup, deleteAccount };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}

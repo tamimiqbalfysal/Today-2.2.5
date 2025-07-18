@@ -1,0 +1,40 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { User } from "@/lib/types";
+import { MapPin } from "lucide-react";
+
+interface ProfileCardProps {
+  user: User;
+}
+
+export function ProfileCard({ user }: ProfileCardProps) {
+  const followers = user.followers ?? 123;
+
+  return (
+    <Card>
+      <CardHeader className="items-center text-center p-6">
+        <Avatar className="h-24 w-24 mb-4 border-4 border-primary/50 shadow-lg">
+            <AvatarImage src={user.photoURL ?? undefined} alt={user.name ?? "user"} />
+            <AvatarFallback className="text-3xl bg-secondary text-secondary-foreground">{user.name?.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <CardTitle className="text-2xl text-primary font-headline">{user.name}</CardTitle>
+        <CardDescription>@{user.username}</CardDescription>
+        <CardDescription className="text-muted-foreground">{user.email}</CardDescription>
+        {user.country && (
+            <CardDescription className="text-muted-foreground flex items-center pt-1">
+                <MapPin className="mr-1 h-4 w-4" />
+                {user.country}
+            </CardDescription>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-center text-center text-sm text-muted-foreground">
+            <div className="space-y-1">
+                <p className="font-bold text-lg text-foreground">{followers}</p>
+                <p>Followers</p>
+            </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
