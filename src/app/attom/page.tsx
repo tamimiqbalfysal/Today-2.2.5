@@ -201,9 +201,10 @@ export default function AttomPage() {
                <Button
                 variant={activeFilter === 'Tribe' ? 'default' : 'outline'}
                 onClick={() => handleFilterClick('Tribe')}
-                className="h-12"
+                size="icon"
+                className="h-12 w-12"
               >
-                <Filter className="mr-2 h-4 w-4" /> Tribe
+                <Filter className="h-5 w-5" />
               </Button>
             </div>
             {isLoadingProducts ? (
