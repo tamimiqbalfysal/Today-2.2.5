@@ -162,12 +162,24 @@ export default function AttomPage() {
             </div>
 
             <div className="mb-8 flex flex-wrap justify-center gap-2">
-              <Button variant="outline">Gift Garden</Button>
-              <Button variant="outline">Orgrim</Button>
-              <Button variant="outline">Secondsell</Button>
-              <Button variant="outline">Marco Polo</Button>
-              <Button variant="outline">Printit</Button>
-              <Button variant="outline">Machinehood</Button>
+              <Button asChild variant="outline">
+                <Link href="/gift-garden">Gift Garden</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/orgrim">Orgrim</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/secondsell">Secondsell</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/marco-polo">Marco Polo</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/printit">Printit</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/machinehood">Machinehood</Link>
+              </Button>
               <Button asChild variant="default">
                 <Link href="/tribe">Tribe</Link>
               </Button>
