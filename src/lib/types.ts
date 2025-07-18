@@ -60,6 +60,7 @@ export interface Notification {
 
 export interface Product {
   id: string;
+  userId: string;
   name: string;
   description: string;
   price: number;
@@ -70,5 +71,3 @@ export interface Product {
   createdAt: Timestamp;
   rating?: number;
 }
-
-    

@@ -13,7 +13,7 @@ import { Star, ShoppingCart, Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, collectionGroup } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -71,7 +71,7 @@ export default function AttomPage() {
     if (!db) return;
     setIsLoadingProducts(true);
 
-    const productsQuery = query(collection(db, 'products'));
+    const productsQuery = query(collectionGroup(db, 'products'));
 
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
       const fetchedProducts = snapshot.docs.map(doc => ({
@@ -88,7 +88,7 @@ export default function AttomPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Could not load products.",
+        description: "Could not load products. If the issue persists, you may need to add a Firestore index.",
       });
       setIsLoadingProducts(false);
     });

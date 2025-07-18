@@ -11,12 +11,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { db, storage } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, doc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import type { Product } from '@/lib/types';
 import Image from 'next/image';
 import { Upload, Star, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
+import { AuthGuard } from '@/components/auth/auth-guard';
+
 
 function ProductCard({ product }: { product: Product }) {
   const { toast } = useToast();
@@ -80,27 +82,17 @@ export default function TribePage() {
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
 
   useEffect(() => {
-    if (!db) return;
+    if (!db || !user) return;
     setIsLoadingProducts(true);
   
-    // Fetch all products, then filter client-side to avoid index issues.
-    const productsQuery = query(collection(db, 'products'));
+    const productsQuery = query(collection(db, `users/${user.uid}/products`), orderBy('createdAt', 'desc'));
   
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
-      const fetchedProducts = snapshot.docs
-        .map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Product))
-        .filter(p => p.category === 'Tribe'); // Filter on the client
+      const fetchedProducts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Product));
       
-      // Sort on the client
-      fetchedProducts.sort((a, b) => {
-          const aTime = a.createdAt?.toMillis() || 0;
-          const bTime = b.createdAt?.toMillis() || 0;
-          return bTime - aTime;
-      });
-  
       setProducts(fetchedProducts);
       setIsLoadingProducts(false);
     }, (error) => {
@@ -108,14 +100,14 @@ export default function TribePage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Could not load products.",
+        description: "Could not load your listed products.",
         duration: 10000,
       });
       setIsLoadingProducts(false);
     });
   
     return () => unsubscribe();
-  }, [toast]);
+  }, [user, toast]);
 
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,11 +133,13 @@ export default function TribePage() {
     try {
       if (!storage || !db) throw new Error("Firebase not configured");
       
-      const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
+      const storageRef = ref(storage, `products/${user.uid}/${Date.now()}_${imageFile.name}`);
       await uploadBytes(storageRef, imageFile);
       const imageUrl = await getDownloadURL(storageRef);
 
-      await addDoc(collection(db, 'products'), {
+      const productsCollectionRef = collection(db, `users/${user.uid}/products`);
+      await addDoc(productsCollectionRef, {
+        userId: user.uid,
         name: productName,
         description,
         price: parseFloat(price),
@@ -183,85 +177,87 @@ export default function TribePage() {
 
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <Header />
-      <main className="flex-1 overflow-y-auto container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-primary">
-            The Tribe Marketplace
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Sell your unique creations to the community.
-          </p>
-           <Button asChild className="mt-8" variant="outline">
-            <Link href="/attom">Go Back to the Store</Link>
-          </Button>
-        </div>
+    <AuthGuard>
+      <div className="flex flex-col min-h-screen bg-background">
+        <Header />
+        <main className="flex-1 overflow-y-auto container mx-auto px-4 py-8">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-primary">
+              The Tribe Marketplace
+            </h1>
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+              Sell your unique creations to the community.
+            </p>
+            <Button asChild className="mt-8" variant="outline">
+              <Link href="/attom">Go Back to the Store</Link>
+            </Button>
+          </div>
 
-        <div className="grid md:grid-cols-2 gap-12">
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>List a New Product</CardTitle>
-                <CardDescription>Fill in the details below to add your item to the marketplace.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleFormSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="product-name">Product Name</Label>
-                    <Input id="product-name" value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Quantum Entangled Socks" disabled={isSubmitting} />
+          <div className="grid md:grid-cols-2 gap-12">
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>List a New Product</CardTitle>
+                  <CardDescription>Fill in the details below to add your item to the marketplace.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleFormSubmit} className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="product-name">Product Name</Label>
+                      <Input id="product-name" value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Quantum Entangled Socks" disabled={isSubmitting} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe your product in detail..." disabled={isSubmitting} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="price">Price (USD)</Label>
+                      <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g., 19.99" min="0.01" step="0.01" disabled={isSubmitting} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Product Image</Label>
+                      <Input id="file-upload" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" disabled={isSubmitting}/>
+                      <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isSubmitting}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        {imageFile ? 'Change Image' : 'Upload Image'}
+                      </Button>
+                      {imagePreview && (
+                        <div className="mt-4 relative w-full aspect-video rounded-md border overflow-hidden">
+                          <Image src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" />
+                        </div>
+                      )}
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? 'Listing...' : 'List Product'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="space-y-6">
+              <h2 className="text-3xl font-bold tracking-tight">Your Listed Products</h2>
+              {isLoadingProducts ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <Card><CardContent className="p-4"><div className="animate-pulse space-y-4"><div className="h-40 bg-muted rounded-md"></div><div className="h-6 w-3/4 bg-muted rounded-md"></div><div className="h-4 w-1/2 bg-muted rounded-md"></div><div className="h-8 w-full bg-muted rounded-md"></div></div></CardContent></Card>
+                    <Card><CardContent className="p-4"><div className="animate-pulse space-y-4"><div className="h-40 bg-muted rounded-md"></div><div className="h-6 w-3/4 bg-muted rounded-md"></div><div className="h-4 w-1/2 bg-muted rounded-md"></div><div className="h-8 w-full bg-muted rounded-md"></div></div></CardContent></Card>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe your product in detail..." disabled={isSubmitting} />
-                  </div>
-                   <div className="space-y-2">
-                    <Label htmlFor="price">Price (USD)</Label>
-                    <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g., 19.99" min="0.01" step="0.01" disabled={isSubmitting} />
-                  </div>
-                  <div className="space-y-2">
-                     <Label>Product Image</Label>
-                     <Input id="file-upload" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" disabled={isSubmitting}/>
-                     <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isSubmitting}>
-                       <Upload className="mr-2 h-4 w-4" />
-                       {imageFile ? 'Change Image' : 'Upload Image'}
-                     </Button>
-                     {imagePreview && (
-                       <div className="mt-4 relative w-full aspect-video rounded-md border overflow-hidden">
-                         <Image src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" />
-                       </div>
-                     )}
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? 'Listing...' : 'List Product'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div className="space-y-6">
-             <h2 className="text-3xl font-bold tracking-tight">Available in Tribe</h2>
-             {isLoadingProducts ? (
+              ) : products.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <Card><CardContent className="p-4"><div className="animate-pulse space-y-4"><div className="h-40 bg-muted rounded-md"></div><div className="h-6 w-3/4 bg-muted rounded-md"></div><div className="h-4 w-1/2 bg-muted rounded-md"></div><div className="h-8 w-full bg-muted rounded-md"></div></div></CardContent></Card>
-                  <Card><CardContent className="p-4"><div className="animate-pulse space-y-4"><div className="h-40 bg-muted rounded-md"></div><div className="h-6 w-3/4 bg-muted rounded-md"></div><div className="h-4 w-1/2 bg-muted rounded-md"></div><div className="h-8 w-full bg-muted rounded-md"></div></div></CardContent></Card>
+                    {products.map(product => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
                 </div>
-             ) : products.length > 0 ? (
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {products.map(product => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-               </div>
-             ) : (
-              <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
-                <h3 className="text-lg font-semibold">No products yet!</h3>
-                <p>Be the first to list a product in the Tribe.</p>
-              </div>
-             )}
+              ) : (
+                <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
+                  <h3 className="text-lg font-semibold">You haven't listed any products yet.</h3>
+                  <p>Use the form to list your first product in the Tribe.</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </AuthGuard>
   );
 }
