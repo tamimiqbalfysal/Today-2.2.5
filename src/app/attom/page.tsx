@@ -17,6 +17,7 @@ import { db } from '@/lib/firebase';
 import type { Post as Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/contexts/cart-context';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 function ProductCard({ product }: { product: Product }) {
   const { toast } = useToast();
@@ -74,7 +75,7 @@ export default function AttomPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [activeFilters, setActiveFilters] = useState<string[]>(['Tribe']);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
 
@@ -89,7 +90,7 @@ export default function AttomPage() {
         id: doc.id,
         ...doc.data()
       } as Product))
-      .filter(p => p.category === 'Tribe')
+      .filter(p => ['Tribe', 'Gift Garden'].includes(p.category || ''))
       .sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
       
       setProducts(fetchedProducts);
@@ -122,27 +123,28 @@ export default function AttomPage() {
   const filteredProducts = useMemo(() => {
     let productsToShow = products;
     
+    if (activeFilters.length > 0) {
+        productsToShow = productsToShow.filter(p => activeFilters.includes(p.category || ''));
+    } else {
+        // If no filters are active, show nothing. Or show all? Let's show all for now.
+        productsToShow = products;
+    }
+
     if (searchTerm) {
       productsToShow = productsToShow.filter(p =>
         p.authorName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
-    // The main filtering by 'Tribe' is now done in the useEffect.
-    // This filter logic can be kept for additional client-side filters if needed.
-    if (activeFilter) {
-      productsToShow = productsToShow.filter(p => p.category === activeFilter);
-    }
 
     return productsToShow;
-  }, [products, searchTerm, activeFilter]);
+  }, [products, searchTerm, activeFilters]);
   
-  const handleFilterClick = (filter: string) => {
-    if (activeFilter === filter) {
-      setActiveFilter(null);
-    } else {
-      setActiveFilter(filter);
-    }
+  const handleFilterChange = (filter: string) => {
+    setActiveFilters(prev => 
+      prev.includes(filter)
+        ? prev.filter(f => f !== filter)
+        : [...prev, filter]
+    );
   };
 
   return (
@@ -197,14 +199,33 @@ export default function AttomPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <Button
-                  variant={activeFilter === 'Tribe' ? 'default' : 'ghost'}
-                  onClick={() => handleFilterClick('Tribe')}
-                  size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10"
-                >
-                  <Filter className="h-5 w-5" />
-                </Button>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                         <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10"
+                        >
+                            <Filter className="h-5 w-5" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuCheckboxItem
+                            checked={activeFilters.includes('Tribe')}
+                            onCheckedChange={() => handleFilterChange('Tribe')}
+                        >
+                            Tribe
+                        </DropdownMenuCheckboxItem>
+                         <DropdownMenuCheckboxItem
+                            checked={activeFilters.includes('Gift Garden')}
+                            onCheckedChange={() => handleFilterChange('Gift Garden')}
+                        >
+                            Gift Garden
+                        </DropdownMenuCheckboxItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
             {isLoadingProducts ? (
