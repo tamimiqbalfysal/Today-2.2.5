@@ -125,8 +125,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (name: string, username: string, email: string, password: string, country: string) => {
     if (!auth || !db) {
-        const error = new Error("Firebase is not configured. Please add your Firebase project configuration to a .env file.");
-        (error as any).code = 'auth/firebase-not-configured';
+      const error = new Error("Firebase is not configured. Please add your Firebase project configuration to a .env file.");
+      (error as any).code = 'auth/firebase-not-configured';
+      throw error;
+    }
+
+    const lowerCaseUsername = username.toLowerCase();
+    const usernameDocRef = doc(db, "usernames", lowerCaseUsername);
+    const usernameDoc = await getDoc(usernameDocRef);
+
+    if (usernameDoc.exists()) {
+        const error = new Error("This username is already taken. Please choose another one.");
+        (error as any).code = 'auth/username-already-in-use';
         throw error;
     }
 
@@ -142,18 +152,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
         await runTransaction(db, async (transaction) => {
-            const lowerCaseUsername = username.toLowerCase();
-            const usernameDocRef = doc(db, "usernames", lowerCaseUsername);
-            const usernameDoc = await transaction.get(usernameDocRef);
-
-            if (usernameDoc.exists()) {
-                const error = new Error("This username is already taken. Please choose another one.");
-                (error as any).code = 'auth/username-already-in-use';
-                throw error;
-            }
-
             const usersCollectionRef = collection(db, 'users');
-            const allUsersSnapshot = await transaction.get(query(usersCollectionRef));
+            const allUsersSnapshot = await getDocs(query(usersCollectionRef));
             const allUserIds = allUsersSnapshot.docs.map(doc => doc.id);
 
             // Update all existing users to follow the new user
@@ -175,12 +175,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 redeemedThinkCodes: 0,
                 credits: 0,
                 unreadNotifications: false,
-                followers: [...allUserIds, firebaseUser.uid], // All existing users + self
+                followers: allUserIds, // All existing users follow the new user
                 following: [firebaseUser.uid], // User follows themself
             });
 
             // Create the username document
-            transaction.set(usernameDocRef, { uid: firebaseUser.uid });
+            transaction.set(doc(db, "usernames", lowerCaseUsername), { uid: firebaseUser.uid });
         });
     } catch (error: any) {
         console.error("CRITICAL: Failed to create user documents in transaction. Original error:", error);
