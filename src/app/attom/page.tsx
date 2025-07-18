@@ -118,6 +118,7 @@ function ProductCard({ product, onAddToCart }: { product: typeof products[0], on
 
 export default function AttomPage() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [showProducts, setShowProducts] = useState(false);
   const lastScrollY = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -167,7 +168,7 @@ export default function AttomPage() {
               <Button variant="outline">Marco Polo</Button>
               <Button variant="outline">Printit</Button>
               <Button variant="outline">Machinehood</Button>
-              <Button variant="outline">Tribe</Button>
+              <Button variant="outline" onClick={() => setShowProducts(true)}>Tribe</Button>
             </div>
             
             <div className="mb-8 max-w-lg mx-auto">
@@ -181,11 +182,17 @@ export default function AttomPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
-              ))}
-            </div>
+            {showProducts ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 text-muted-foreground">
+                <p>Click 'Tribe' to discover our products.</p>
+              </div>
+            )}
           </div>
         </main>
       </div>
