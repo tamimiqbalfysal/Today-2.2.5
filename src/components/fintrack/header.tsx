@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from 'next/link';
-import { Menu, PenSquare, Trash2, User, LogOut, Home, PlusCircle } from "lucide-react";
+import { Menu, PenSquare, Trash2, User, LogOut, Home, PlusCircle, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -30,11 +30,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDrawer } from "@/contexts/drawer-context";
 import Image from "next/image";
+import { useCart } from "@/contexts/cart-context";
 
 const hoverIndicator = <span className="absolute left-0 top-1/2 -translate-y-1/2 h-1/2 w-1 bg-foreground scale-y-0 group-hover:scale-y-100 transition-transform origin-center rounded-r-full" />;
 
 interface HeaderProps {
   isVisible?: boolean;
+}
+
+function CartButton() {
+    const { cartCount } = useCart();
+    return (
+        <Button asChild size="icon" variant="ghost" className="rounded-full relative">
+            <Link href="/checkout">
+                <ShoppingCart />
+                {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        {cartCount}
+                    </span>
+                )}
+            </Link>
+        </Button>
+    );
 }
 
 export function Header({ isVisible = true }: HeaderProps) {
@@ -142,7 +159,8 @@ export function Header({ isVisible = true }: HeaderProps) {
               </div>
 
               {/* Right: Another Drawer */}
-              <div className="justify-self-end">
+              <div className="justify-self-end flex items-center gap-2">
+                <CartButton />
                 <Sheet open={isProfileDrawerOpen} onOpenChange={setIsProfileDrawerOpen}>
                   <SheetTrigger asChild>
                       <Button size="icon" variant="ghost" className="rounded-full">
@@ -189,7 +207,15 @@ export function Header({ isVisible = true }: HeaderProps) {
           ) : (
             <>
               {/* LOGGED OUT STATE */}
-              <div className="col-span-3 flex items-center justify-center space-x-2">
+               <div className="justify-self-start">
+                  <Link href="/" aria-label="Home">
+                    <Button size="icon" variant="ghost" className="rounded-full">
+                        <Home />
+                    </Button>
+                  </Link>
+               </div>
+               <div className="col-start-3 justify-self-end flex items-center space-x-2">
+                   <CartButton />
                    <Button asChild variant="ghost">
                       <Link href="/login">Log In</Link>
                   </Button>

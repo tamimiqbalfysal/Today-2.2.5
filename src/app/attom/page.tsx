@@ -4,7 +4,6 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { AuthGuard } from '@/components/auth/auth-guard';
 import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,8 +16,20 @@ import { collection, onSnapshot, query, where, collectionGroup } from 'firebase/
 import { db } from '@/lib/firebase';
 import type { Post as Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCart } from '@/contexts/cart-context';
 
-function ProductCard({ product, onAddToCart }: { product: Product, onAddToCart: (productName: string) => void }) {
+function ProductCard({ product }: { product: Product }) {
+  const { toast } = useToast();
+  const { addToCart } = useCart();
+
+  const handleAddToCart = () => {
+    addToCart(product, 1);
+    toast({
+      title: 'Added to Cart',
+      description: `${product.authorName} has been added to your cart.`,
+    });
+  };
+
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       <CardContent className="p-0">
@@ -49,7 +60,7 @@ function ProductCard({ product, onAddToCart }: { product: Product, onAddToCart: 
         </div>
       </CardContent>
       <div className="p-4 pt-0">
-        <Button className="w-full" onClick={() => onAddToCart(product.authorName)}>
+        <Button className="w-full" onClick={handleAddToCart}>
           <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
         </Button>
       </div>
@@ -108,19 +119,8 @@ export default function AttomPage() {
     }
   };
 
-  const handleAddToCart = (productName: string) => {
-    toast({
-      title: 'Added to Cart',
-      description: `${productName} has been added to your cart.`,
-    });
-  };
-
   const filteredProducts = useMemo(() => {
     let productsToShow = products;
-
-    if (activeFilter) {
-      productsToShow = productsToShow.filter(p => p.category === activeFilter);
-    }
     
     if (searchTerm) {
       productsToShow = productsToShow.filter(p =>
@@ -129,7 +129,7 @@ export default function AttomPage() {
     }
 
     return productsToShow;
-  }, [products, searchTerm, activeFilter]);
+  }, [products, searchTerm]);
   
   const handleFilterClick = (filter: string) => {
     if (activeFilter === filter) {
@@ -140,7 +140,6 @@ export default function AttomPage() {
   };
 
   return (
-    <AuthGuard>
       <div className="flex flex-col h-screen bg-background">
         <Header isVisible={isHeaderVisible} />
         <main
@@ -219,7 +218,7 @@ export default function AttomPage() {
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
@@ -231,6 +230,5 @@ export default function AttomPage() {
           </div>
         </main>
       </div>
-    </AuthGuard>
   );
 }
