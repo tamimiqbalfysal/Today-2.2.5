@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCart } from '@/contexts/cart-context';
@@ -20,7 +21,7 @@ export function FloatingCartButton() {
   return (
     <Button 
       asChild
-      className="fixed bottom-24 right-4 z-50 h-16 w-16 rounded-full shadow-lg"
+      className="fixed bottom-28 right-4 z-50 h-16 w-16 rounded-full shadow-lg"
       aria-label={`View cart with ${cartCount} items`}
     >
       <Link href="/checkout">
