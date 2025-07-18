@@ -2,60 +2,40 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
     
-    // User profile data
-    match /users/{userId} {
-      // Users can read any profile
-      allow read: if isAuthenticated();
-      // Users can only create their own profile
-      allow create: if isOwner(userId);
-      // Users can only update their own profile data.
-      // We allow updating `unreadNotifications` by any authenticated user for notifications.
-      allow update: if isOwner(userId) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['unreadNotifications']);
-
-      // Notifications subcollection
-      match /notifications/{notificationId} {
-        // Users can only create notifications for other users (e.g., liking a post)
-        allow create: if isAuthenticated();
-        // Users can only read, update (e.g., mark as read), or delete their own notifications.
-        allow read, update, delete: if isOwner(userId);
-      }
-    }
-    
-    // Usernames for uniqueness check
-    match /usernames/{username} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
-    }
-
-    // Posts collection
+    // Posts can be read by anyone, but only created, updated, or deleted by their author.
     match /posts/{postId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isOwner(request.resource.data.authorId);
-      // Allow users to update likes and comments arrays on any post.
-      // Allow only the author to update other fields like content.
-      allow update: if isAuthenticated() && 
-                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'comments']) ||
-                       isOwner(resource.data.authorId));
-      allow delete: if isAuthenticated() && isOwner(resource.data.authorId);
-    }
-
-    // Gift and Think codes
-    match /giftCodes/{codeId} {
-      allow read, write: if isAuthenticated();
+      allow read: if true;
+      allow create, update: if request.auth != null && request.resource.data.authorId == request.auth.uid;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
     
+    // Users can read any profile, but only create, update, or delete their own.
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Notifications are private to each user.
+    match /users/{userId}/notifications/{notificationId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Usernames can be read by anyone, but only created or deleted by the associated user.
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+    
+    // Gift codes can be read and updated by authenticated users.
+    match /giftCodes/{codeId} {
+        allow read, update: if request.auth != null;
+    }
+    
+    // Think codes can be read and updated by authenticated users.
     match /thinkCodes/{codeId} {
-      allow read, write: if isAuthenticated();
+        allow read, update: if request.auth != null;
     }
   }
 }
