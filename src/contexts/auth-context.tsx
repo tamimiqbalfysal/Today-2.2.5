@@ -125,79 +125,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (name: string, username: string, email: string, password: string, country: string) => {
     if (!auth || !db) {
-      const error = new Error("Firebase is not configured. Please add your Firebase project configuration to a .env file.");
-      (error as any).code = 'auth/firebase-not-configured';
-      throw error;
+        const error = new Error("Firebase is not configured. Please add your Firebase project configuration to a .env file.");
+        (error as any).code = 'auth/firebase-not-configured';
+        throw error;
     }
 
     const lowerCaseUsername = username.toLowerCase();
     const usernameDocRef = doc(db, "usernames", lowerCaseUsername);
-    const usernameDoc = await getDoc(usernameDocRef);
-
-    if (usernameDoc.exists()) {
-        const error = new Error("This username is already taken. Please choose another one.");
-        (error as any).code = 'auth/username-already-in-use';
-        throw error;
-    }
-
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const firebaseUser = userCredential.user;
-
-    const photoURL = `https://placehold.co/100x100.png?text=${name.charAt(0)}`;
-    
-    await updateProfile(firebaseUser, { 
-      displayName: name,
-      photoURL: photoURL
-    });
 
     try {
-        await runTransaction(db, async (transaction) => {
-            const usersCollectionRef = collection(db, 'users');
-            const allUsersSnapshot = await getDocs(query(usersCollectionRef));
-            const allUserIds = allUsersSnapshot.docs.map(doc => doc.id);
-
-            // Update all existing users to follow the new user
-            allUsersSnapshot.docs.forEach(userDoc => {
-                const userRef = doc(db, 'users', userDoc.id);
-                transaction.update(userRef, { following: arrayUnion(firebaseUser.uid) });
-            });
-            
-            // Create the new user document
-            const userDocRef = doc(db, "users", firebaseUser.uid);
-            transaction.set(userDocRef, {
-                uid: firebaseUser.uid,
-                name: name,
-                username: lowerCaseUsername,
-                email: email,
-                photoURL: photoURL,
-                country: country,
-                redeemedGiftCodes: 0,
-                redeemedThinkCodes: 0,
-                credits: 0,
-                unreadNotifications: false,
-                followers: allUserIds, // All existing users follow the new user
-                following: [firebaseUser.uid], // User follows themself
-            });
-
-            // Create the username document
-            transaction.set(doc(db, "usernames", lowerCaseUsername), { uid: firebaseUser.uid });
-        });
-    } catch (error: any) {
-        console.error("CRITICAL: Failed to create user documents in transaction. Original error:", error);
-        await deleteUser(firebaseUser).catch(deleteError => {
-            console.error("CRITICAL: Failed to roll back user creation. Manual cleanup required for user:", firebaseUser.uid, deleteError);
-        });
-
-        if (error.code === "auth/username-already-in-use") {
-             throw error;
-        } else {
-            const newError = new Error("Your account was created, but we failed to save your profile. Please check your Firestore security rules to allow writes to the 'users' and 'usernames' collections.");
-            (newError as any).code = 'auth/firestore-setup-failed';
-            throw newError;
+        const usernameDoc = await getDoc(usernameDocRef);
+        if (usernameDoc.exists()) {
+            const error = new Error("This username is already taken. Please choose another one.");
+            (error as any).code = 'auth/username-already-in-use';
+            throw error;
         }
+
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const firebaseUser = userCredential.user;
+
+        const photoURL = `https://placehold.co/100x100.png?text=${name.charAt(0)}`;
+        await updateProfile(firebaseUser, {
+            displayName: name,
+            photoURL: photoURL
+        });
+
+        const batch = writeBatch(db);
+
+        const newUserDocRef = doc(db, "users", firebaseUser.uid);
+        batch.set(newUserDocRef, {
+            uid: firebaseUser.uid,
+            name: name,
+            username: lowerCaseUsername,
+            email: email,
+            photoURL: photoURL,
+            country: country,
+            redeemedGiftCodes: 0,
+            redeemedThinkCodes: 0,
+            credits: 0,
+            unreadNotifications: false,
+            followers: [], // Starts with 0 followers
+            following: [], // Starts following 0 users
+        });
+
+        const newUsernameDocRef = doc(db, "usernames", lowerCaseUsername);
+        batch.set(newUsernameDocRef, { uid: firebaseUser.uid });
+
+        await batch.commit();
+        
+        router.push('/');
+
+    } catch (error: any) {
+        console.error("Error during signup:", error);
+        if (error.code === 'auth/username-already-in-use') {
+            throw error;
+        }
+        if (auth.currentUser && auth.currentUser.uid === (error as any)?.uid) {
+            await deleteUser(auth.currentUser).catch(deleteError => {
+                 console.error("CRITICAL: Failed to roll back user creation after firestore error.", deleteError);
+            });
+        }
+        throw error;
     }
-    
-    router.push('/');
   };
 
   const logout = async () => {
