@@ -3,24 +3,26 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, query, orderBy, onSnapshot, writeBatch, Timestamp, increment, runTransaction, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from '@/lib/firebase';
-import type { Post as Product } from '@/lib/types';
+import type { Post as Product, Review } from '@/lib/types';
 import { useCart } from '@/contexts/cart-context';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
+import { formatDistanceToNow } from 'date-fns';
 
 import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Star, ShoppingCart, ArrowLeft, Edit, Upload, Save } from 'lucide-react';
+import { Star, ShoppingCart, ArrowLeft, Edit, Upload, Save, Send } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 function ProductPageSkeleton() {
   return (
@@ -55,9 +57,14 @@ export default function ProductDetailPage() {
   const { user: currentUser } = useAuth();
   
   const [product, setProduct] = useState<Product | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  const [rating, setRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   // Edit mode state
   const [editedName, setEditedName] = useState('');
@@ -70,11 +77,12 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!productId || !db) return;
 
-    const fetchProduct = async () => {
+    const fetchProductAndReviews = async () => {
       setIsLoading(true);
       try {
         const productRef = doc(db, 'posts', productId);
         const productSnap = await getDoc(productRef);
+        
         if (productSnap.exists()) {
           const productData = { id: productSnap.id, ...productSnap.data() } as Product;
           setProduct(productData);
@@ -86,7 +94,15 @@ export default function ProductDetailPage() {
           setEditedName(productData.authorName);
           setEditedDescription(description);
           setEditedPrice(price);
-
+          
+          const reviewsRef = collection(db, 'posts', productId, 'reviews');
+          const q = query(reviewsRef, orderBy('timestamp', 'desc'));
+          const unsubscribeReviews = onSnapshot(q, (snapshot) => {
+              const fetchedReviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+              setReviews(fetchedReviews);
+          });
+          
+          // You might want to store and call this unsubscribe function on component unmount
         } else {
           toast({ variant: 'destructive', title: 'Product not found.' });
           setProduct(null);
@@ -99,7 +115,7 @@ export default function ProductDetailPage() {
       }
     };
 
-    fetchProduct();
+    fetchProductAndReviews();
   }, [productId, toast]);
   
   const price = useMemo(() => {
@@ -149,7 +165,6 @@ export default function ProductDetailPage() {
     try {
         let newMediaURL = product.mediaURL;
         if (newImageFile) {
-            // Delete old image if it exists
             if (product.mediaURL) {
               try {
                 const oldImageRef = ref(storage, product.mediaURL);
@@ -160,7 +175,6 @@ export default function ProductDetailPage() {
                 }
               }
             }
-            // Upload new image
             const newImageRef = ref(storage, `products/${currentUser.uid}/${Date.now()}_${newImageFile.name}`);
             await uploadBytes(newImageRef, newImageFile);
             newMediaURL = await getDownloadURL(newImageRef);
@@ -177,7 +191,6 @@ export default function ProductDetailPage() {
 
         toast({ title: "Success", description: "Product updated successfully." });
         
-        // Update local state to reflect changes
         setProduct(prev => prev ? { ...prev, authorName: editedName, content: updatedContent, mediaURL: newMediaURL } : null);
         setIsEditing(false);
         setNewImageFile(null);
@@ -187,6 +200,61 @@ export default function ProductDetailPage() {
         toast({ variant: "destructive", title: "Error", description: "Could not save changes." });
     } finally {
         setIsSaving(false);
+    }
+  };
+  
+  const handleSubmitReview = async () => {
+    if (!currentUser || !product || rating === 0 || !reviewComment.trim()) {
+        toast({
+            variant: "destructive",
+            title: "Missing Information",
+            description: "Please provide a rating and a comment for your review."
+        });
+        return;
+    }
+    setIsSubmittingReview(true);
+    try {
+        const reviewRef = collection(db, 'posts', product.id, 'reviews');
+        await addDoc(reviewRef, {
+            authorId: currentUser.uid,
+            authorName: currentUser.name,
+            authorPhotoURL: currentUser.photoURL || '',
+            rating: rating,
+            comment: reviewComment,
+            timestamp: Timestamp.now()
+        });
+        
+        const productRef = doc(db, 'posts', product.id);
+        await runTransaction(db, async (transaction) => {
+            const productDoc = await transaction.get(productRef);
+            if (!productDoc.exists()) throw "Product does not exist!";
+            
+            const currentReviewCount = productDoc.data().reviewCount || 0;
+            const currentAverageRating = productDoc.data().averageRating || 0;
+            
+            const newReviewCount = currentReviewCount + 1;
+            const newAverageRating = ((currentAverageRating * currentReviewCount) + rating) / newReviewCount;
+            
+            transaction.update(productRef, {
+                reviewCount: newReviewCount,
+                averageRating: newAverageRating
+            });
+        });
+        
+        setProduct(prev => prev ? { 
+            ...prev, 
+            reviewCount: (prev.reviewCount || 0) + 1, 
+            averageRating: (((prev.averageRating || 0) * (prev.reviewCount || 0)) + rating) / ((prev.reviewCount || 0) + 1)
+        } : null);
+
+        toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
+        setRating(0);
+        setReviewComment('');
+    } catch (error) {
+        console.error("Error submitting review:", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not submit your review." });
+    } finally {
+        setIsSubmittingReview(false);
     }
   };
 
@@ -211,6 +279,9 @@ export default function ProductDetailPage() {
       </div>
     );
   }
+  
+  const averageRating = product.averageRating || 0;
+  const reviewCount = product.reviewCount || 0;
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -267,11 +338,11 @@ export default function ProductDetailPage() {
                     {[...Array(5)].map((_, i) => (
                         <Star
                         key={i}
-                        className="h-5 w-5 text-muted-foreground"
+                        className={cn("h-5 w-5", i < averageRating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")}
                         />
                     ))}
                     </div>
-                    <span className="text-sm text-muted-foreground">(0 Review)</span>
+                    <span className="text-sm text-muted-foreground">({reviewCount} Review{reviewCount !== 1 ? 's' : ''})</span>
                 </div>
               
                 {isEditing ? (
@@ -307,6 +378,71 @@ export default function ProductDetailPage() {
                     </Button>
                 )}
             </div>
+          </div>
+          
+          <div className="mt-16 space-y-12">
+            <Card>
+              <CardHeader>
+                  <CardTitle>Write a Review</CardTitle>
+                  <CardDescription>Share your thoughts on this product with the community.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">Your Rating:</p>
+                      <div className="flex items-center">
+                          {[...Array(5)].map((_, i) => (
+                              <Star
+                                  key={i}
+                                  className={cn("h-6 w-6 cursor-pointer", i < rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")}
+                                  onClick={() => setRating(i + 1)}
+                              />
+                          ))}
+                      </div>
+                  </div>
+                  <Textarea
+                      placeholder="Tell us what you liked or disliked..."
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      disabled={isSubmittingReview}
+                  />
+                  <Button onClick={handleSubmitReview} disabled={isSubmittingReview || rating === 0 || !reviewComment.trim()}>
+                      <Send className="mr-2 h-4 w-4" />
+                      {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                  </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Customer Reviews ({reviewCount})</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {reviews.length > 0 ? (
+                        reviews.map(review => (
+                            <div key={review.id} className="flex gap-4">
+                                <Avatar>
+                                    <AvatarImage src={review.authorPhotoURL} alt={review.authorName} />
+                                    <AvatarFallback>{review.authorName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between">
+                                        <p className="font-semibold">{review.authorName}</p>
+                                        <p className="text-xs text-muted-foreground">{formatDistanceToNow(review.timestamp.toDate(), { addSuffix: true })}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1 my-1">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} className={cn("h-4 w-4", i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                                        ))}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{review.comment}</p>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-center text-muted-foreground">No reviews yet. Be the first to share your thoughts!</p>
+                    )}
+                </CardContent>
+            </Card>
           </div>
         </div>
       </main>

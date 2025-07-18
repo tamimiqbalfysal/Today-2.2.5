@@ -37,7 +37,20 @@ export interface Post {
   sharedPostId?: string;
   sharedPost?: Post; // For client-side rendering
   category?: string;
+  reviewCount?: number;
+  averageRating?: number;
 }
+
+export interface Review {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorPhotoURL: string;
+  rating: number;
+  comment: string;
+  timestamp: Timestamp;
+}
+
 
 export interface Comment {
     id: string;
