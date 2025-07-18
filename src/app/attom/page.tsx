@@ -8,7 +8,7 @@ import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, ShoppingCart, Search, Filter } from 'lucide-react';
+import { Star, ShoppingCart, Search, Filter, Info } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -68,9 +68,14 @@ function ProductCard({ product }: { product: Product }) {
         </div>
       </CardContent>
       <div className="p-4 pt-0">
-        <Button className="w-full" onClick={handleAddToCart}>
-          <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-        </Button>
+        <div className="flex gap-2">
+            <Button variant="outline" className="w-full">
+              <Info className="mr-2 h-4 w-4" /> Details
+            </Button>
+            <Button className="w-full" onClick={handleAddToCart}>
+              <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+            </Button>
+        </div>
       </div>
     </Card>
   );

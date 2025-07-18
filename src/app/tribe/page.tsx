@@ -15,7 +15,7 @@ import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy,
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Post as Product } from '@/lib/types';
 import Image from 'next/image';
-import { Upload, Star, ShoppingCart, Trash2 } from 'lucide-react';
+import { Upload, Star, ShoppingCart, Trash2, Info } from 'lucide-react';
 import Link from 'next/link';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -87,9 +87,14 @@ function ProductCard({ product, onDelete }: { product: Product, onDelete: (produ
         </div>
       </CardContent>
       <div className="p-4 pt-0 mt-auto">
-        <Button className="w-full" onClick={() => handleAddToCart(product.authorName)}>
-          <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-        </Button>
+        <div className="flex gap-2">
+            <Button variant="outline" className="w-full">
+              <Info className="mr-2 h-4 w-4" /> Details
+            </Button>
+            <Button className="w-full" onClick={() => handleAddToCart(product.authorName)}>
+              <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+            </Button>
+        </div>
       </div>
     </Card>
   );
