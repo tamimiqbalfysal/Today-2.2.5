@@ -68,8 +68,10 @@ function ProductCard({ product }: { product: Product }) {
       </CardContent>
       <div className="p-4 pt-0">
         <div className="flex flex-col gap-2">
-            <Button variant="outline" className="w-full">
-              <Info className="mr-2 h-4 w-4" /> Details
+            <Button asChild variant="outline" className="w-full">
+              <Link href={`/attom/${product.id}`}>
+                <Info className="mr-2 h-4 w-4" /> Details
+              </Link>
             </Button>
             <Button className="w-full" onClick={handleAddToCart}>
               <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
