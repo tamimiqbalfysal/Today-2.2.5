@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AuthGuard } from '@/components/auth/auth-guard';
@@ -9,9 +9,10 @@ import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, ShoppingCart, Search } from 'lucide-react';
+import { Star, ShoppingCart, Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const products = [
   {
@@ -67,12 +68,22 @@ const products = [
   {
     id: 6,
     name: 'Proton Pack',
-    category: 'Bags',
+    category: 'Tribe',
     price: 79.99,
     rating: 5,
     imageUrl: 'https://placehold.co/600x600.png',
     aiHint: 'modern backpack',
     isNew: false,
+  },
+  {
+    id: 7,
+    name: 'Tribal Emblem Tee',
+    category: 'Tribe',
+    price: 34.99,
+    rating: 5,
+    imageUrl: 'https://placehold.co/600x600.png',
+    aiHint: 'graphic t-shirt',
+    isNew: true,
   },
 ];
 
@@ -122,6 +133,8 @@ export default function AttomPage() {
   const lastScrollY = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -140,6 +153,30 @@ export default function AttomPage() {
       title: 'Added to Cart',
       description: `${productName} has been added to your cart.`,
     });
+  };
+
+  const filteredProducts = useMemo(() => {
+    let productsToShow = products;
+
+    if (activeFilter) {
+      productsToShow = productsToShow.filter(p => p.category === activeFilter);
+    }
+    
+    if (searchTerm) {
+      productsToShow = productsToShow.filter(p =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return productsToShow;
+  }, [searchTerm, activeFilter]);
+  
+  const handleFilterClick = (filter: string) => {
+    if (activeFilter === filter) {
+      setActiveFilter(null);
+    } else {
+      setActiveFilter(filter);
+    }
   };
 
   return (
@@ -185,19 +222,28 @@ export default function AttomPage() {
               </Button>
             </div>
             
-            <div className="mb-8 max-w-lg mx-auto">
-              <div className="relative">
+            <div className="mb-8 max-w-lg mx-auto flex items-center gap-2">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="Search products..."
                   className="w-full pl-10 h-12 text-base"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+               <Button
+                variant={activeFilter === 'Tribe' ? 'default' : 'outline'}
+                onClick={() => handleFilterClick('Tribe')}
+                className="h-12"
+              >
+                <Filter className="mr-2 h-4 w-4" /> Tribe
+              </Button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
               ))}
             </div>
