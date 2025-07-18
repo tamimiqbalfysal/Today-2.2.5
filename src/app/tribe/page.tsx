@@ -82,23 +82,25 @@ export default function TribePage() {
   useEffect(() => {
     if (!db) return;
     setIsLoadingProducts(true);
-
+  
+    // Fetch all products, then filter client-side to avoid index issues.
     const productsQuery = query(collection(db, 'products'));
-
+  
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
       const fetchedProducts = snapshot.docs
         .map(doc => ({
           id: doc.id,
           ...doc.data()
         } as Product))
-        .filter(p => p.category === 'Tribe');
+        .filter(p => p.category === 'Tribe'); // Filter on the client
       
+      // Sort on the client
       fetchedProducts.sort((a, b) => {
           const aTime = a.createdAt?.toMillis() || 0;
           const bTime = b.createdAt?.toMillis() || 0;
           return bTime - aTime;
       });
-
+  
       setProducts(fetchedProducts);
       setIsLoadingProducts(false);
     }, (error) => {
@@ -106,12 +108,12 @@ export default function TribePage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Could not load products. If the issue persists, you may need to add a Firestore index.",
+        description: "Could not load products.",
         duration: 10000,
       });
       setIsLoadingProducts(false);
     });
-
+  
     return () => unsubscribe();
   }, [toast]);
 
@@ -262,5 +264,4 @@ export default function TribePage() {
       </main>
     </div>
   );
-
-    
+}
