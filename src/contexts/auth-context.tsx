@@ -147,11 +147,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const usernameDoc = await transaction.get(usernameDocRef);
 
             if (usernameDoc.exists()) {
-                const error = new Error("Username is already taken.");
+                const error = new Error("This username is already taken. Please choose another one.");
                 (error as any).code = 'auth/username-already-in-use';
                 throw error;
             }
+
+            const usersCollectionRef = collection(db, 'users');
+            const allUsersSnapshot = await transaction.get(query(usersCollectionRef));
+            const allUserIds = allUsersSnapshot.docs.map(doc => doc.id);
+
+            // Update all existing users to follow the new user
+            allUsersSnapshot.docs.forEach(userDoc => {
+                const userRef = doc(db, 'users', userDoc.id);
+                transaction.update(userRef, { following: arrayUnion(firebaseUser.uid) });
+            });
             
+            // Create the new user document
             const userDocRef = doc(db, "users", firebaseUser.uid);
             transaction.set(userDocRef, {
                 uid: firebaseUser.uid,
@@ -164,10 +175,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 redeemedThinkCodes: 0,
                 credits: 0,
                 unreadNotifications: false,
-                followers: [firebaseUser.uid], // User follows themself
+                followers: [...allUserIds, firebaseUser.uid], // All existing users + self
                 following: [firebaseUser.uid], // User follows themself
             });
 
+            // Create the username document
             transaction.set(usernameDocRef, { uid: firebaseUser.uid });
         });
     } catch (error: any) {
