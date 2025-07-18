@@ -1,3 +1,4 @@
+
 import type { Timestamp } from "firebase/firestore";
 
 export interface User {
@@ -56,3 +57,18 @@ export interface Notification {
   timestamp: Timestamp;
   read: boolean;
 }
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  category: string;
+  sellerId: string;
+  sellerName: string;
+  createdAt: Timestamp;
+  rating?: number;
+}
+
+    

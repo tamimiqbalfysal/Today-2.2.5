@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -15,7 +16,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, router]);
 
-  if (loading) {
+  if (loading || !user) {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
             <div className="w-full max-w-4xl mx-auto space-y-6">
@@ -47,11 +48,19 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // This check is important to avoid a flash of unauthenticated content
+  // in components that might use the user object directly.
   if (user) {
     return <>{children}</>;
   }
 
   // If not loading and no user, the redirect is in flight.
-  // Return null to render nothing while the redirect happens.
-  return null;
+  // Return a loading skeleton or null to render nothing while redirecting.
+  return (
+      <div className="flex items-center justify-center min-h-screen">
+          <Skeleton className="h-12 w-12 rounded-full" />
+      </div>
+  );
 }
+
+    
