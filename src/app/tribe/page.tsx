@@ -11,16 +11,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { db, storage } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, doc, Timestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, doc, Timestamp, deleteDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Post as Product } from '@/lib/types';
 import Image from 'next/image';
-import { Upload, Star, ShoppingCart } from 'lucide-react';
+import { Upload, Star, ShoppingCart, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { AuthGuard } from '@/components/auth/auth-guard';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product, onDelete }: { product: Product, onDelete: (productId: string, mediaUrl?: string) => void }) {
   const { toast } = useToast();
   const handleAddToCart = (productName: string) => {
     toast({
@@ -34,6 +35,30 @@ function ProductCard({ product }: { product: Product }) {
 
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col">
+       <CardHeader className="flex-row gap-4 items-center justify-between p-4">
+        <h3 className="text-lg font-semibold flex-grow truncate">{product.authorName}</h3>
+         <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive flex-shrink-0">
+                    <Trash2 className="h-5 w-5" />
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your product listing.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onDelete(product.id, product.mediaURL)} className="bg-destructive hover:bg-destructive/90">
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+      </CardHeader>
       <CardContent className="p-0 flex flex-col flex-grow">
         <div className="relative">
           <Image
@@ -45,7 +70,6 @@ function ProductCard({ product }: { product: Product }) {
           />
         </div>
         <div className="p-4 space-y-2 flex flex-col flex-grow">
-          <h3 className="text-lg font-semibold">{product.authorName}</h3>
           <p className="text-sm text-muted-foreground flex-grow">{description}</p>
           <div className="flex items-center gap-2">
             <div className="flex items-center">
@@ -124,6 +148,28 @@ export default function TribePage() {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string, mediaUrl?: string) => {
+    if (!db || !storage) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Firebase not configured.' });
+        return;
+    }
+
+    try {
+        await deleteDoc(doc(db, 'posts', productId));
+        if (mediaUrl) {
+            const storageRef = ref(storage, mediaUrl);
+            await deleteObject(storageRef).catch(err => {
+                // It's okay if the object doesn't exist, we can ignore that error.
+                if (err.code !== 'storage/object-not-found') throw err;
+            });
+        }
+        toast({ title: 'Success', description: 'Product deleted successfully.' });
+    } catch (error) {
+        console.error("Error deleting product:", error);
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the product.' });
     }
   };
 
@@ -250,7 +296,7 @@ export default function TribePage() {
               ) : products.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {products.map(product => (
-                      <ProductCard key={product.id} product={product} />
+                      <ProductCard key={product.id} product={product} onDelete={handleDeleteProduct} />
                     ))}
                 </div>
               ) : (
