@@ -14,78 +14,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-const products = [
-  {
-    id: 1,
-    name: 'Quantum T-Shirt',
-    category: 'Apparel',
-    price: 29.99,
-    rating: 5,
-    imageUrl: 'https://placehold.co/600x600.png',
-    aiHint: 'black t-shirt',
-    isNew: true,
-  },
-  {
-    id: 2,
-    name: 'Singularity Mug',
-    category: 'Accessories',
-    price: 15.99,
-    rating: 4,
-    imageUrl: 'https://placehold.co/600x600.png',
-    aiHint: 'white coffee mug',
-    isNew: false,
-  },
-  {
-    id: 3,
-    name: 'Atomic Hoodie',
-    category: 'Apparel',
-    price: 59.99,
-    rating: 5,
-    imageUrl: 'https://placehold.co/600x600.png',
-    aiHint: 'grey hoodie',
-    isNew: false,
-  },
-  {
-    id: 4,
-    name: 'Neutron Notebook',
-    category: 'Stationery',
-    price: 24.99,
-    rating: 4,
-    imageUrl: 'https://placehold.co/600x600.png',
-    aiHint: 'leather notebook',
-    isNew: true,
-  },
-  {
-    id: 5,
-    name: 'Electron Enamel Pin',
-    category: 'Accessories',
-    price: 9.99,
-    rating: 5,
-    imageUrl: 'https://placehold.co/600x600.png',
-    aiHint: 'enamel pin',
-    isNew: false,
-  },
-  {
-    id: 6,
-    name: 'Proton Pack',
-    category: 'Tribe',
-    price: 79.99,
-    rating: 5,
-    imageUrl: 'https://placehold.co/600x600.png',
-    aiHint: 'modern backpack',
-    isNew: false,
-  },
-  {
-    id: 7,
-    name: 'Tribal Emblem Tee',
-    category: 'Tribe',
-    price: 34.99,
-    rating: 5,
-    imageUrl: 'https://placehold.co/600x600.png',
-    aiHint: 'graphic t-shirt',
-    isNew: true,
-  },
-];
+const products: any[] = [];
 
 function ProductCard({ product, onAddToCart }: { product: typeof products[0], onAddToCart: (productName: string) => void }) {
   return (
