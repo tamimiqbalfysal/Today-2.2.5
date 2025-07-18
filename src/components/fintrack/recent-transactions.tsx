@@ -297,7 +297,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                                     <path d="M9 9.5c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5c0 .828-.672 1.5-1.5 1.5S9 10.328 9 9.5z" fill={hasLaughed ? '#333' : 'white'} stroke="none" />
                                     <path d="M15 9.5c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5c0 .828-.672 1.5-1.5 1.5S15 10.328 15 9.5z" fill={hasLaughed ? '#333' : 'white'} stroke="none" />
                                     <motion.path variants={{ laughing: laughAnimation.tear }} d="M6.5 11.5C6.5 12.328 7.172 13 8 13s1.5-.672 1.5-1.5c0-.398-.158-.755-.41-1.031" fill={hasLaughed ? '#3498DB' : 'none'} stroke="none" opacity="0"/>
-                                    <motion.path variants={{ laughing: laughAnimation.tear }} d="M17.5 11.5C17.5 12.328 16.828 13 16 13s-1.5-.672-1.5-1.5c0-.398.158-.755.41-1.031" fill={hasLaughed ? '#3498DB' : 'none'} stroke="none" opacity="0"/>
+                                    <motion.path variants={{ laughing: laughAnimation.tear }} d="M17.5 11.5C17.5 12.328 16.828 13 16 13s-1.5-.672 1.5-1.5c0-.398.158-.755.41-1.031" fill={hasLaughed ? '#3498DB' : 'none'} stroke="none" opacity="0"/>
                                 </motion.svg>
                              </motion.div>
                         </Button>
@@ -307,37 +307,35 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                         <Button variant="ghost" size="icon" onClick={() => setIsShareDialogOpen(true)} disabled={!currentUser}>
                             <Share2 className="h-6 w-6" />
                         </Button>
-                         <div className="flex items-center gap-x-2">
-                            <Button variant="ghost" size="icon">
-                                <Star className="h-6 w-6" />
-                            </Button>
-                            {isAuthor && onDelete && (
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon">
-                                            <Trash2 className="h-6 w-6 text-black" />
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete your post.
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                            onClick={() => onDelete(post.id, post.mediaURL)}
-                                        >
-                                            Delete
-                                        </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            )}
-                        </div>
+                        <Button variant="ghost" size="icon">
+                            <Star className="h-6 w-6" />
+                        </Button>
+                        {isAuthor && onDelete && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <Trash2 className="h-6 w-6 text-black" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete your post.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        onClick={() => onDelete(post.id, post.mediaURL)}
+                                    >
+                                        Delete
+                                    </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
                     </div>
                 </div>
 
