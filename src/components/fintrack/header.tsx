@@ -38,22 +38,6 @@ interface HeaderProps {
   isVisible?: boolean;
 }
 
-function CartButton() {
-    const { cartCount } = useCart();
-    return (
-        <Button asChild size="icon" variant="ghost" className="rounded-full relative">
-            <Link href="/checkout">
-                <ShoppingCart />
-                {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                        {cartCount}
-                    </span>
-                )}
-            </Link>
-        </Button>
-    );
-}
-
 export function Header({ isVisible = true }: HeaderProps) {
   const { user, logout, deleteAccount } = useAuth();
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
@@ -160,7 +144,6 @@ export function Header({ isVisible = true }: HeaderProps) {
 
               {/* Right: Another Drawer */}
               <div className="justify-self-end flex items-center gap-2">
-                <CartButton />
                 <Sheet open={isProfileDrawerOpen} onOpenChange={setIsProfileDrawerOpen}>
                   <SheetTrigger asChild>
                       <Button size="icon" variant="ghost" className="rounded-full">
@@ -215,7 +198,6 @@ export function Header({ isVisible = true }: HeaderProps) {
                   </Link>
                </div>
                <div className="col-start-3 justify-self-end flex items-center space-x-2">
-                   <CartButton />
                    <Button asChild variant="ghost">
                       <Link href="/login">Log In</Link>
                   </Button>
