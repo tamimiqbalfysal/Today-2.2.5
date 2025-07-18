@@ -82,13 +82,15 @@ export default function AttomPage() {
     if (!db) return;
     setIsLoadingProducts(true);
 
-    const productsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+    const productsQuery = query(collection(db, 'posts'));
 
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
       const fetchedProducts = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      } as Product)).filter(p => p.category === 'Tribe');
+      } as Product))
+      .filter(p => p.category === 'Tribe')
+      .sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
       
       setProducts(fetchedProducts);
       setIsLoadingProducts(false);
@@ -126,6 +128,8 @@ export default function AttomPage() {
       );
     }
     
+    // The main filtering by 'Tribe' is now done in the useEffect.
+    // This filter logic can be kept for additional client-side filters if needed.
     if (activeFilter) {
       productsToShow = productsToShow.filter(p => p.category === activeFilter);
     }
