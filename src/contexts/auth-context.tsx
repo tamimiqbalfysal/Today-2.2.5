@@ -130,17 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
     }
 
-    const lowerCaseUsername = username.toLowerCase();
-    const usernameDocRef = doc(db, "usernames", lowerCaseUsername);
-
     try {
-        const usernameDoc = await getDoc(usernameDocRef);
-        if (usernameDoc.exists()) {
-            const error = new Error("This username is already taken. Please choose another one.");
-            (error as any).code = 'auth/username-already-in-use';
-            throw error;
-        }
-
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const firebaseUser = userCredential.user;
 
@@ -150,13 +140,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             photoURL: photoURL
         });
 
-        const batch = writeBatch(db);
-
         const newUserDocRef = doc(db, "users", firebaseUser.uid);
-        batch.set(newUserDocRef, {
+        await setDoc(newUserDocRef, {
             uid: firebaseUser.uid,
             name: name,
-            username: lowerCaseUsername,
+            username: username.toLowerCase(),
             email: email,
             photoURL: photoURL,
             country: country,
@@ -164,22 +152,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             redeemedThinkCodes: 0,
             credits: 0,
             unreadNotifications: false,
-            followers: [], // Starts with 0 followers
-            following: [], // Starts following 0 users
+            followers: [], 
+            following: [], 
         });
-
-        const newUsernameDocRef = doc(db, "usernames", lowerCaseUsername);
-        batch.set(newUsernameDocRef, { uid: firebaseUser.uid });
-
-        await batch.commit();
         
         router.push('/');
 
     } catch (error: any) {
         console.error("Error during signup:", error);
-        if (error.code === 'auth/username-already-in-use') {
-            throw error;
+        if (error.code === 'auth/email-already-in-use') {
+            const customError = new Error("This email is already in use by another account.");
+            (customError as any).code = 'auth/email-already-in-use';
+            throw customError;
         }
+        
         if (auth.currentUser && auth.currentUser.uid === (error as any)?.uid) {
             await deleteUser(auth.currentUser).catch(deleteError => {
                  console.error("CRITICAL: Failed to roll back user creation after firestore error.", deleteError);

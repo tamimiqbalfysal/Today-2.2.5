@@ -1,3 +1,4 @@
+
 "use client"
 
 import type { Post, User, Comment } from "@/lib/types";
@@ -158,9 +159,9 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
     const { toast } = useToast();
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
-    const hasLiked = useMemo(() => 
-        currentUser ? post.likes.includes(currentUser.uid) : false,
-    [post.likes, currentUser]);
+    const hasFollowed = useMemo(() => 
+        currentUser && author?.followers ? author.followers.includes(currentUser.uid) : false,
+    [author, currentUser]);
     
     const [isExpanded, setIsExpanded] = useState(false);
     const [commentText, setCommentText] = useState("");
@@ -174,11 +175,11 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
     };
     
     const handleIncreaseClick = () => {
-      // If user has already liked, this button only expands/collapses
-      if (hasLiked) {
+      // If user has already followed, this button only expands/collapses
+      if (hasFollowed) {
         setIsExpanded(prev => !prev);
       } else {
-        // If not liked, liking also expands the view
+        // If not followed, following also expands the view
         if (!currentUser || !onLike) return;
         onLike(post.id, post.authorId);
         setIsExpanded(true);
@@ -203,9 +204,9 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
     const followersCount = useMemo(() => {
         if (!author || author.followers === undefined) return null;
         const followers = author.followers.length;
-        if (followers >= 1000000) return `${(followers / 1000000).toFixed(1)}m followers`;
-        if (followers >= 1000) return `${(followers / 1000).toFixed(1)}k followers`;
-        return `${followers} follower${followers !== 1 ? 's' : ''}`;
+        if (followers >= 1000000) return `${(followers / 1000000).toFixed(1)}m`;
+        if (followers >= 1000) return `${(followers / 1000).toFixed(1)}k`;
+        return `${followers}`;
     }, [author]);
 
     const laughAnimation = {
@@ -243,7 +244,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                                 <Skeleton className="h-4 w-24 mt-1" />
                             ) : (
                                 followersCount !== null && (
-                                    <p className="text-sm text-muted-foreground">{followersCount}</p>
+                                    <p className="text-sm text-muted-foreground">{followersCount} followers</p>
                                 )
                             )}
                         </div>
@@ -283,8 +284,8 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                 
                 <div className="flex items-center justify-between pt-3 border-t border-border">
                     <div className="flex items-center">
-                        <Button variant="ghost" size="lg" onClick={handleHeartClick} className={cn("flex items-center gap-2", !hasLiked && "text-muted-foreground")}>
-                            <Heart className={cn("h-6 w-6", hasLiked && "fill-red-500 text-red-500")} />
+                        <Button variant="ghost" size="lg" onClick={handleHeartClick} className={cn("flex items-center gap-2", post.likes.includes(currentUser?.uid || '') ? "" : "text-muted-foreground")}>
+                            <Heart className={cn("h-6 w-6", post.likes.includes(currentUser?.uid || '') && "fill-red-500 text-red-500")} />
                             {post.likes.length > 0 && <span className="text-sm font-semibold">{post.likes.length}</span>}
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => setHasLaughed(!hasLaughed)} className={cn(!hasLaughed && "text-muted-foreground")}>
@@ -384,18 +385,18 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                     </AnimatePresence>
                     
                     <Button 
-                      variant={hasLiked ? "default" : "outline"}
+                      variant={hasFollowed ? "default" : "outline"}
                       className={cn(
                           "w-full text-base",
-                           hasLiked && "bg-black text-white hover:bg-black/90",
-                           !hasLiked && "bg-white text-black hover:bg-neutral-100 border-black"
+                           hasFollowed && "bg-black text-white hover:bg-black/90",
+                           !hasFollowed && "bg-white text-black hover:bg-neutral-100 border-black"
                       )}
                       onClick={handleIncreaseClick}
-                      disabled={!currentUser}
+                      disabled={!currentUser || isAuthor}
                     >
-                        <span className="font-semibold">{hasLiked ? 'Following' : 'Follow'}</span>
-                         {post.likes.length > 0 && (
-                            <span className="ml-2 font-semibold">{post.likes.length}</span>
+                        <span className="font-semibold">{hasFollowed ? 'Following' : 'Follow'}</span>
+                         {author?.followers && author.followers.length > 0 && (
+                            <span className="ml-2 font-semibold">{author.followers.length}</span>
                         )}
                     </Button>
 

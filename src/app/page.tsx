@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -129,9 +130,20 @@ export default function TodayPage() {
                 const postData = postDoc.data();
                 const currentLikes: string[] = postData.likes || [];
                 const isLiking = !currentLikes.includes(likerId);
+                
+                const authorRef = doc(db, 'users', authorId);
+                const likerRef = doc(db, 'users', likerId);
+                const authorDoc = await transaction.get(authorRef);
+                const likerDoc = await transaction.get(likerRef);
+
+                if (!authorDoc.exists() || !likerDoc.exists()) {
+                    throw "User does not exist!";
+                }
 
                 if (isLiking) {
                     transaction.update(postRef, { likes: arrayUnion(likerId) });
+                    transaction.update(authorRef, { followers: arrayUnion(likerId) });
+                    transaction.update(likerRef, { following: arrayUnion(authorId) });
 
                     if (authorId !== likerId) {
                         const notificationRef = doc(collection(db, `users/${authorId}/notifications`));
@@ -145,11 +157,13 @@ export default function TodayPage() {
                             read: false,
                         });
                         
-                        const userDocRef = doc(db, 'users', authorId);
-                        transaction.update(userDocRef, { unreadNotifications: true });
+                        transaction.update(authorRef, { unreadNotifications: true });
                     }
                 } else {
                     transaction.update(postRef, { likes: arrayRemove(likerId) });
+                    transaction.update(authorRef, { followers: arrayRemove(likerId) });
+                    transaction.update(likerRef, { following: arrayRemove(authorId) });
+
                      if (authorId !== likerId) {
                         const notificationsCollection = collection(db, `users/${authorId}/notifications`);
                         const q = query(notificationsCollection, where("postId", "==", postId), where("senderId", "==", likerId), where("type", "==", "like"));
