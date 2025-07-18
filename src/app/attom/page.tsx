@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AuthGuard } from '@/components/auth/auth-guard';
@@ -13,10 +13,12 @@ import { Star, ShoppingCart, Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Product } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const products: any[] = [];
-
-function ProductCard({ product, onAddToCart }: { product: typeof products[0], onAddToCart: (productName: string) => void }) {
+function ProductCard({ product, onAddToCart }: { product: Product, onAddToCart: (productName: string) => void }) {
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       <CardContent className="p-0">
@@ -27,9 +29,7 @@ function ProductCard({ product, onAddToCart }: { product: typeof products[0], on
             width={600}
             height={600}
             className="w-full h-auto aspect-square object-cover"
-            data-ai-hint={product.aiHint}
           />
-          {product.isNew && <Badge className="absolute top-2 left-2">NEW</Badge>}
         </div>
         <div className="p-4 space-y-2">
           <p className="text-sm text-muted-foreground">{product.category}</p>
@@ -39,13 +39,13 @@ function ProductCard({ product, onAddToCart }: { product: typeof products[0], on
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-5 w-5 ${i < product.rating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`}
+                  className={`h-5 w-5 ${i < (product.rating ?? 0) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`}
                 />
               ))}
             </div>
-            <span className="text-sm text-muted-foreground">({product.rating}.0)</span>
+            <span className="text-sm text-muted-foreground">({product.rating?.toFixed(1) ?? 'N/A'})</span>
           </div>
-          <p className="text-2xl font-bold">${product.price}</p>
+          <p className="text-2xl font-bold">${product.price.toFixed(2)}</p>
         </div>
       </CardContent>
       <div className="p-4 pt-0">
@@ -64,6 +64,34 @@ export default function AttomPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+
+  useEffect(() => {
+    if (!db) return;
+    setIsLoadingProducts(true);
+
+    const productsQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
+      const fetchedProducts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Product));
+      setProducts(fetchedProducts);
+      setIsLoadingProducts(false);
+    }, (error) => {
+      console.error("Error fetching products:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not load products.",
+      });
+      setIsLoadingProducts(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -98,7 +126,7 @@ export default function AttomPage() {
     }
 
     return productsToShow;
-  }, [searchTerm, activeFilter]);
+  }, [products, searchTerm, activeFilter]);
   
   const handleFilterClick = (filter: string) => {
     if (activeFilter === filter) {
@@ -170,12 +198,33 @@ export default function AttomPage() {
                 <Filter className="mr-2 h-4 w-4" /> Tribe
               </Button>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
-              ))}
-            </div>
+            {isLoadingProducts ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i}>
+                    <CardContent className="p-4">
+                      <div className="animate-pulse space-y-4">
+                        <Skeleton className="h-48 bg-muted rounded-md"></Skeleton>
+                        <Skeleton className="h-6 w-3/4 bg-muted rounded-md"></Skeleton>
+                        <Skeleton className="h-4 w-1/2 bg-muted rounded-md"></Skeleton>
+                        <Skeleton className="h-8 w-full bg-muted rounded-md"></Skeleton>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
+                ))}
+              </div>
+            ) : (
+                <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
+                    <h3 className="text-lg font-semibold">No products found</h3>
+                    <p>Try clearing your filters or search to see all available items.</p>
+                </div>
+            )}
           </div>
         </main>
       </div>
