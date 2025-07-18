@@ -8,7 +8,7 @@ interface ProfileCardProps {
 }
 
 export function ProfileCard({ user }: ProfileCardProps) {
-  const followers = user.followers ?? 123;
+  const followersCount = user.followers?.length ?? 0;
 
   return (
     <Card>
@@ -30,7 +30,7 @@ export function ProfileCard({ user }: ProfileCardProps) {
       <CardContent>
         <div className="flex justify-center text-center text-sm text-muted-foreground">
             <div className="space-y-1">
-                <p className="font-bold text-lg text-foreground">{followers}</p>
+                <p className="font-bold text-lg text-foreground">{followersCount}</p>
                 <p>Followers</p>
             </div>
         </div>

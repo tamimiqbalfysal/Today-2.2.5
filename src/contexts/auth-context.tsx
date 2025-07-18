@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, updateProfile, deleteUser, reauthenticateWithCredential, EmailAuthProvider, type User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, onSnapshot, getDoc, runTransaction, collection, query, orderBy, Unsubscribe, updateDoc, writeBatch, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, getDoc, runTransaction, collection, query, orderBy, Unsubscribe, updateDoc, writeBatch, where, getDocs, deleteDoc, arrayUnion } from 'firebase/firestore';
 import type { User as AppUser, Notification, Post } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -76,7 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               country: userData.country,
               credits: userData.credits || 0,
               notifications: notifications,
-              unreadNotifications: unreadNotifications
+              unreadNotifications: unreadNotifications,
+              followers: userData.followers || [],
+              following: userData.following || [],
             });
             setLoading(false);
           }, (error) => {
@@ -147,6 +149,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw new Error("Username is already taken.");
             }
             
+            // Get all existing users to make them followers
+            const usersCollection = collection(db, 'users');
+            const allUsersSnapshot = await getDocs(usersCollection);
+            const existingUserIds = allUsersSnapshot.docs.map(d => d.id);
+            
+            // Set the new user's document
             const userDocRef = doc(db, "users", firebaseUser.uid);
             transaction.set(userDocRef, {
                 uid: firebaseUser.uid,
@@ -159,7 +167,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 redeemedThinkCodes: 0,
                 credits: 0,
                 unreadNotifications: false,
+                followers: existingUserIds, // New user is followed by everyone
+                following: [], // New user starts by following no one
             });
+            
+            // Update all existing users to follow the new user
+            for (const userId of existingUserIds) {
+                const userToUpdateRef = doc(db, 'users', userId);
+                transaction.update(userToUpdateRef, {
+                    following: arrayUnion(firebaseUser.uid)
+                });
+            }
+
             transaction.set(usernameDocRef, { uid: firebaseUser.uid });
         });
     } catch (error: any) {

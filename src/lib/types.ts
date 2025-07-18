@@ -17,7 +17,8 @@ export interface User {
   credits?: number;
   notifications?: Notification[];
   unreadNotifications?: boolean;
-  followers?: number;
+  followers?: string[]; // Array of user UIDs
+  following?: string[]; // Array of user UIDs
 }
 
 export interface Post {

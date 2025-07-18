@@ -202,7 +202,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
 
     const followersCount = useMemo(() => {
         if (!author || author.followers === undefined) return null;
-        const followers = author.followers;
+        const followers = author.followers.length;
         if (followers >= 1000000) return `${(followers / 1000000).toFixed(1)}m followers`;
         if (followers >= 1000) return `${(followers / 1000).toFixed(1)}k followers`;
         return `${followers} follower${followers !== 1 ? 's' : ''}`;
@@ -240,7 +240,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                                 <p className="font-semibold text-lg text-orange-500 hover:underline">{post.authorName || 'Anonymous'}</p>
                             </Link>
                             {isLoadingAuthor ? (
-                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-4 w-24 mt-1" />
                             ) : (
                                 followersCount !== null && (
                                     <p className="text-sm text-muted-foreground">{followersCount}</p>
