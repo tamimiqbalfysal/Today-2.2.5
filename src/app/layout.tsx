@@ -1,10 +1,7 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from '@/contexts/auth-context';
-import { DrawerProvider } from '@/contexts/drawer-context';
-import { FloatingCounterButton } from '@/components/fintrack/floating-counter-button';
-import { NotificationSheet } from '@/components/fintrack/notification-sheet';
+import { AppProviders } from '@/components/app-providers';
 
 export const metadata: Metadata = {
   title: 'Modern App',
@@ -24,14 +21,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-sans antialiased" suppressHydrationWarning>
-        <AuthProvider>
-            <DrawerProvider>
-              <NotificationSheet>
-                {children}
-                <FloatingCounterButton />
-              </NotificationSheet>
-            </DrawerProvider>
-        </AuthProvider>
+        <AppProviders>
+          {children}
+        </AppProviders>
         <Toaster />
       </body>
     </html>
