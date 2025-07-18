@@ -109,7 +109,7 @@ export function Header({ isVisible = true }: HeaderProps) {
                                 Delete
                               </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
+                            <AlertDialogContent onInteractOutside={(e) => e.preventDefault()}>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                 <AlertDialogDescription asChild>
