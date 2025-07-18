@@ -1,82 +1,73 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user document is being created with the correct fields.
-    function isCreatingValidUser(userId) {
-      let creatingUser = request.resource.data;
-      return request.auth.uid == userId &&
-             creatingUser.uid == userId &&
-             creatingUser.name is string &&
-             creatingUser.username is string &&
-             creatingUser.email == request.auth.token.email &&
-             creatingUser.photoURL is string &&
-             creatingUser.country is string &&
-             creatingUser.redeemedGiftCodes == 0 &&
-             creatingUser.redeemedThinkCodes == 0 &&
-             creatingUser.credits == 0 &&
-             creatingUser.unreadNotifications == false &&
-             creatingUser.followers is list &&
-             creatingUser.following is list;
+    // Helper function to check if a user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
+    // Helper function to check if a user is the owner of a document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users Collection
+    // - Anyone authenticated can read any user's profile.
+    // - A user can create their own profile upon signup.
+    // - A user can only update or delete their own profile.
     match /users/{userId} {
-      // Allow any authenticated user to read user profiles.
-      allow read: if request.auth != null;
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      allow update, delete: if isOwner(userId);
 
-      // Allow a user to create their own profile document.
-      allow create: if isCreatingValidUser(userId);
-
-      // Allow a user to update their own profile, but not their follower/following counts directly.
-      allow update: if request.auth.uid == userId;
-
-      // Allow a user to delete their own document.
-      allow delete: if request.auth.uid == userId;
-
+      // Notifications Subcollection
+      // - A user can only manage their own notifications.
       match /notifications/{notificationId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
     }
 
+    // Usernames Collection
+    // - Used to ensure usernames are unique.
+    // - Authenticated users can read to check for availability.
+    // - A user can create their own username document upon signup.
+    // - A user can only delete their own username document.
     match /usernames/{username} {
-      // Anyone can check if a username exists.
-      allow read: if true;
-      // An authenticated user can create a username document for themselves.
-      allow create: if request.auth != null;
-      // Allow a user to delete their own username document.
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
+    // Posts Collection
+    // - Any authenticated user can read any post.
+    // - An authenticated user can create a post.
+    // - A user can only update or delete their own posts.
+    match /posts/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+    }
+
+    // Gift Codes Collection (for "Thank u, G!")
+    // - Authenticated users can read codes to check their status.
+    // - Authenticated users can update a code to mark it as used.
+    // - Only admins (not defined here, so effectively no one) can create/delete.
+    match /giftCodes/{codeId} {
+        allow read: if isAuthenticated();
+        allow update: if isAuthenticated();
+        allow create, delete: if false; 
     }
     
-    match /posts/{postId} {
-      // Any authenticated user can read posts.
-      allow read: if request.auth != null;
-
-      // Users can create posts if they are the author.
-      allow create: if request.auth.uid == request.resource.data.authorId;
-
-      // Users can update posts (e.g., for likes, comments).
-      allow update: if request.auth != null;
-      
-      // Users can only delete their own posts.
-      allow delete: if request.auth.uid == resource.data.authorId;
-    }
-
-    match /giftCodes/{codeId} {
-      // Authenticated users can read/update gift codes (to check and redeem them).
-      allow read, update: if request.auth != null;
-      // Only your admin process should be able to create or delete codes.
-      // For simplicity in this app, we'll allow authenticated users to do this,
-      // but in production you'd lock this down.
-      allow create, delete: if request.auth != null; 
-    }
-
+    // Think Codes Collection (for the popup)
+    // - Authenticated users can read codes to check their status.
+    // - Authenticated users can update a code to mark it as used.
+    // - Only admins (not defined here, so effectively no one) can create/delete.
     match /thinkCodes/{codeId} {
-      // Authenticated users can read/update think codes (to check and redeem them).
-      allow read, update: if request.auth != null;
-      // Only your admin process should be able to create or delete codes.
-      allow create, delete: if request.auth != null;
+        allow read: if isAuthenticated();
+        allow update: if isAuthenticated();
+        allow create, delete: if false; 
     }
   }
 }
