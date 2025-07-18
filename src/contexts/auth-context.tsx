@@ -5,8 +5,8 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, updateProfile, deleteUser, reauthenticateWithCredential, EmailAuthProvider, type User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, onSnapshot, getDoc, runTransaction, collection, query, orderBy, Unsubscribe, updateDoc, writeBatch } from 'firebase/firestore';
-import type { User as AppUser, Notification } from '@/lib/types';
+import { doc, setDoc, onSnapshot, getDoc, runTransaction, collection, query, orderBy, Unsubscribe, updateDoc, writeBatch, where, getDocs, deleteDoc } from 'firebase/firestore';
+import type { User as AppUser, Notification, Post } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -205,23 +205,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const credential = EmailAuthProvider.credential(currentUser.email, password);
       await reauthenticateWithCredential(currentUser, credential);
-
-      await runTransaction(db, async (transaction) => {
-        const userDocRef = doc(db, 'users', currentUser.uid);
-        transaction.delete(userDocRef);
-
-        if (currentUserData.username) {
-            const usernameDocRef = doc(db, 'usernames', currentUserData.username.toLowerCase());
-            transaction.delete(usernameDocRef);
-        }
-      });
       
+      const batch = writeBatch(db);
+
+      // 1. Delete all posts by the user
+      const postsQuery = query(collection(db, 'posts'), where('authorId', '==', currentUser.uid));
+      const postsSnapshot = await getDocs(postsQuery);
+      postsSnapshot.forEach(postDoc => {
+        batch.delete(postDoc.ref);
+      });
+
+      // 2. Delete user document
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      batch.delete(userDocRef);
+
+      // 3. Delete username document
+      if (currentUserData.username) {
+          const usernameDocRef = doc(db, 'usernames', currentUserData.username.toLowerCase());
+          batch.delete(usernameDocRef);
+      }
+
+      // Commit all Firestore deletions
+      await batch.commit();
+      
+      // Finally, delete the Firebase Auth user
       await deleteUser(currentUser);
+      
       router.push('/login');
     } catch (error: any) {
       console.error("Error deleting account:", error);
       if (error.code === 'auth/wrong-password') {
         throw new Error("The password you entered is incorrect. Please try again.");
+      }
+      if (error.code === 'permission-denied') {
+        throw new Error("Permission denied. Check your Firestore security rules to allow deleting posts and user documents.");
       }
       throw error;
     }
