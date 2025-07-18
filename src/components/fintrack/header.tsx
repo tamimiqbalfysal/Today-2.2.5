@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from 'next/link';
 import { Menu, PenSquare, Trash2, User, LogOut, Home, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -109,7 +109,7 @@ export function Header({ isVisible = true }: HeaderProps) {
                                 Delete
                               </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent onInteractOutside={(e) => e.preventDefault()}>
+                              <AlertDialogContent onInteractOutside={(e) => e.preventDefault()} onOpenAutoFocus={(e) => e.preventDefault()}>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                 <AlertDialogDescription asChild>
