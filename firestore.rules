@@ -1,47 +1,54 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // User documents
     match /users/{userId} {
-      // Allow users to read all user profiles (for seeing followers/following, etc.)
+      // Allow any authenticated user to read user profiles
       allow read: if request.auth != null;
-      // Allow users to create their own user document.
-      allow create: if request.auth != null && request.auth.uid == userId;
-      // Allow users to update their own document, and other users to update their `following` list.
-      allow update: if request.auth != null && request.auth.uid == userId;
-      // Allow users to delete their own document.
-      allow delete: if request.auth != null && request.auth.uid == userId;
+      // Allow users to create and update their own document
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      // Allow users to update other users' documents ONLY to add to the 'following' array. This is for the auto-follow feature.
+      allow update: if request.auth != null && request.resource.data.following == request.data.following;
 
-      // Notifications are a subcollection of users
+      // Allow users to delete their own document
+      allow delete: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to manage their own notifications
       match /notifications/{notificationId} {
-        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
-
+    
+    // Username documents for ensuring uniqueness
     match /usernames/{username} {
-      // Allow anyone to check if a username exists
       allow read: if request.auth != null;
-      // Allow a user to create a username document for themselves
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      // Allow a user to delete their own username document
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      // Allow creation only if the username doesn't exist and it's for the logged-in user
+      allow create: if request.auth != null && !exists(/databases/$(database)/documents/usernames/$(username)) && request.resource.data.uid == request.auth.uid;
+      // Allow deletion only by the user who owns the username
+      allow delete: if request.auth != null && get(/databases/$(database)/documents/usernames/$(username)).data.uid == request.auth.uid;
     }
 
+    // Posts
     match /posts/{postId} {
-      // Allow any authenticated user to read any post
       allow read: if request.auth != null;
-      // Allow authenticated users to create posts
-      allow create: if request.auth != null;
-      // Allow users to update posts (e.g., likes, comments), or the author to edit/delete
-      allow update, delete: if request.auth != null;
+      // Allow creation if the authorId matches the logged-in user
+      allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
+      // Allow anyone logged in to like or comment (update)
+      allow update: if request.auth != null;
+      // Allow deletion only by the post author
+      allow delete: if request.auth != null && get(/databases/$(database)/documents/posts/$(postId)).data.authorId == request.auth.uid;
     }
     
+    // Gift and Think codes
     match /giftCodes/{codeId} {
-      allow read, write: if request.auth != null;
+        allow write, read, update: if request.auth != null;
     }
 
     match /thinkCodes/{codeId} {
-      allow read, write: if request.auth != null;
+        allow write, read, update: if request.auth != null;
     }
   }
 }
