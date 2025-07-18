@@ -177,7 +177,7 @@ export default function AttomPage() {
               <Button asChild variant="outline">
                 <Link href="/machinehood">Machinehood</Link>
               </Button>
-              <Button asChild variant="default">
+              <Button asChild variant="outline">
                 <Link href="/tribe">Tribe</Link>
               </Button>
             </div>
