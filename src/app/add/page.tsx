@@ -20,7 +20,7 @@ const apps: DrawerApp[] = [
   { id: 'findit', name: 'Findit', logo: '/findit-logo.png', href: '#' },
   { id: 'mingle', name: 'Mingle', logo: '/mingle-logo.png', href: '#' },
   { id: 'thankug', name: 'Thanku G', logo: '/thankug-logo.png', href: '/thank-you' },
-  { id: 'attom', name: 'Attom', logo: 'https://placehold.co/48x48/9ca3af/FFFFFF?text=A', href: '#' },
+  { id: 'attom', name: 'Attom', logo: 'https://placehold.co/48x48/9ca3af/FFFFFF?text=A', href: '/attom' },
 ];
 
 const moreApps: DrawerApp[] = [
