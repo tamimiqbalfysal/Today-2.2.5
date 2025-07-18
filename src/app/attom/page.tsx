@@ -168,7 +168,7 @@ export default function AttomPage() {
               <Button variant="outline">Marco Polo</Button>
               <Button variant="outline">Printit</Button>
               <Button variant="outline">Machinehood</Button>
-              <Button variant="outline" onClick={() => setShowProducts(true)}>Tribe</Button>
+              <Button variant={showProducts ? 'default' : 'outline'} onClick={() => setShowProducts(prev => !prev)}>Tribe</Button>
             </div>
             
             <div className="mb-8 max-w-lg mx-auto">
