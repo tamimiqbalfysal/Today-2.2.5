@@ -359,10 +359,10 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                         <Button variant="ghost" size="icon">
                             <Star className="h-6 w-6" />
                         </Button>
-                        {isAuthor && onDelete && (
+                        {onDelete && (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon">
+                                    <Button variant="ghost" size="icon" disabled={!isAuthor}>
                                         <Trash2 className="h-6 w-6" />
                                     </Button>
                                 </AlertDialogTrigger>
