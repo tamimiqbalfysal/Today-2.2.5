@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const apps: DrawerApp[] = [
-  { id: 'think', name: 'Think', logo: '/think-logo.png', href: '#' },
+  { id: 'think', name: 'Think', logo: '/think-logo.png', href: '/think' },
   { id: 'findit', name: 'Findit', logo: '/findit-logo.png', href: '#' },
   { id: 'mingle', name: 'Mingle', logo: '/mingle-logo.png', href: '#' },
   { id: 'thankug', name: 'Thanku G', logo: '/thankug-logo.png', href: '/thank-you' },
