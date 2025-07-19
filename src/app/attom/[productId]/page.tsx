@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -52,7 +53,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.productId as string;
   const router = useRouter();
-  const { addToCart } = useCart();
+  const { addToCart, setLastViewedProductId, purchasedProductIds } = useCart();
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   
@@ -73,6 +74,15 @@ export default function ProductDetailPage() {
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const hasPurchased = useMemo(() => {
+    return purchasedProductIds.includes(productId);
+  }, [purchasedProductIds, productId]);
+  
+  useEffect(() => {
+    setLastViewedProductId(productId);
+    return () => setLastViewedProductId(null);
+  }, [productId, setLastViewedProductId]);
 
   useEffect(() => {
     if (!productId || !db) return;
@@ -154,7 +164,9 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     if (!product) return;
-    const productWithPrice = { ...product, content: price };
+    const priceMatch = product.content.match(/(\d+(\.\d+)?)$/);
+    const numericPrice = priceMatch ? parseFloat(priceMatch[1]).toFixed(2) : '0.00';
+    const productWithPrice = { ...product, content: numericPrice };
     addToCart(productWithPrice, 1);
     toast({
       title: 'Added to Cart',
@@ -446,36 +458,38 @@ export default function ProductDetailPage() {
                 </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                  <CardTitle>Write a Review</CardTitle>
-                  <CardDescription>Share your thoughts on this product with the community.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                  <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">Your Rating:</p>
-                      <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                              <Star
-                                  key={i}
-                                  className={cn("h-6 w-6 cursor-pointer", i < rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")}
-                                  onClick={() => setRating(i + 1)}
-                              />
-                          ))}
-                      </div>
-                  </div>
-                  <Textarea
-                      placeholder="Tell us what you liked or disliked..."
-                      value={reviewComment}
-                      onChange={(e) => setReviewComment(e.target.value)}
-                      disabled={isSubmittingReview}
-                  />
-                  <Button onClick={handleSubmitReview} disabled={isSubmittingReview || rating === 0 || !reviewComment.trim()}>
-                      <Send className="mr-2 h-4 w-4" />
-                      {isSubmittingReview ? "Submitting..." : "Submit Review"}
-                  </Button>
-              </CardContent>
-            </Card>
+            {hasPurchased && (
+              <Card>
+                <CardHeader>
+                    <CardTitle>Write a Review</CardTitle>
+                    <CardDescription>Share your thoughts on this product with the community.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">Your Rating:</p>
+                        <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                                <Star
+                                    key={i}
+                                    className={cn("h-6 w-6 cursor-pointer", i < rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")}
+                                    onClick={() => setRating(i + 1)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    <Textarea
+                        placeholder="Tell us what you liked or disliked..."
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        disabled={isSubmittingReview}
+                    />
+                    <Button onClick={handleSubmitReview} disabled={isSubmittingReview || rating === 0 || !reviewComment.trim()}>
+                        <Send className="mr-2 h-4 w-4" />
+                        {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                    </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </main>

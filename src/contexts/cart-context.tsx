@@ -1,7 +1,7 @@
 
 'use client';
 
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode, useEffect } from 'react';
 import type { Post as Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,6 +18,10 @@ interface CartContextType {
   clearCart: () => void;
   cartCount: number;
   cartTotal: number;
+  lastViewedProductId: string | null;
+  setLastViewedProductId: (productId: string | null) => void;
+  purchasedProductIds: string[];
+  addPurchasedProducts: (productIds: string[]) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -25,6 +29,15 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
+  const [lastViewedProductId, setLastViewedProductId] = useState<string | null>(null);
+  const [purchasedProductIds, setPurchasedProductIds] = useState<string[]>([]);
+  
+   useEffect(() => {
+    const storedPurchased = window.localStorage.getItem('purchasedProductIds');
+    if (storedPurchased) {
+      setPurchasedProductIds(JSON.parse(storedPurchased));
+    }
+  }, []);
 
   const addToCart = useCallback((product: Product, quantity: number) => {
     setCartItems(prevItems => {
@@ -64,6 +77,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = useCallback(() => {
     setCartItems([]);
   }, []);
+  
+  const addPurchasedProducts = useCallback((productIds: string[]) => {
+    setPurchasedProductIds(prevIds => {
+        const newIds = Array.from(new Set([...prevIds, ...productIds]));
+        window.localStorage.setItem('purchasedProductIds', JSON.stringify(newIds));
+        return newIds;
+    });
+  }, []);
 
   const cartCount = useMemo(() => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
@@ -71,7 +92,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   
   const cartTotal = useMemo(() => {
     return cartItems.reduce((total, item) => {
-      const price = parseFloat(item.product.content) || 0;
+      // Extract the price from the content string, assuming it's the number at the end
+      const priceMatch = item.product.content.match(/(\d+(\.\d+)?)$/);
+      const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
       return total + (price * item.quantity);
     }, 0);
   }, [cartItems]);
@@ -83,7 +106,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     updateQuantity,
     clearCart,
     cartCount,
-    cartTotal
+    cartTotal,
+    lastViewedProductId,
+    setLastViewedProductId,
+    purchasedProductIds,
+    addPurchasedProducts,
   };
 
   return (
