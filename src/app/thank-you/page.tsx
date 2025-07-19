@@ -1,7 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
-import { doc, getDoc, updateDoc, increment, collection, getDocs, deleteField } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, collection, getDocs, deleteField, setDoc, deleteDoc } from 'firebase/firestore';
 import { motion } from 'framer-motion';
 import Confetti from 'react-confetti';
 import { useState, useRef, useEffect } from 'react';
@@ -186,6 +187,7 @@ export default function ThankYouPage() {
     if (!user || !db) return;
 
     try {
+      // 1. Update the user's document
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
         paymentCategory: feedback.category,
@@ -193,16 +195,31 @@ export default function ThankYouPage() {
         paymentAccountNumber: feedback.accountNumber,
         paymentNotes: feedback.anythingElse,
       });
+
+      // 2. Add a new document to the admin-facing collection
+      const submissionRef = doc(db, 'paymentSubmissions', user.uid);
+      await setDoc(submissionRef, {
+        userId: user.uid,
+        userName: user.name,
+        userEmail: user.email,
+        ...feedback,
+        submittedAt: new Date(),
+      }, { merge: true });
+
       toast({
         title: 'Success!',
         description: 'Your payment information has been saved.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving feedback:", error);
+      let description = 'Could not save your payment information.';
+       if (error.code === 'permission-denied') {
+        description = "Permission Denied. Please update your Firestore security rules to allow writes to 'users' and 'paymentSubmissions' collections.";
+      }
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Could not save your payment information.',
+        description: description,
       });
     }
   };
@@ -210,6 +227,7 @@ export default function ThankYouPage() {
   const handleDeleteFeedback = async () => {
     if (!user || !db) return;
     try {
+      // 1. Remove fields from the user's document
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
         paymentCategory: deleteField(),
@@ -217,16 +235,25 @@ export default function ThankYouPage() {
         paymentAccountNumber: deleteField(),
         paymentNotes: deleteField(),
       });
+
+      // 2. Delete the document from the admin-facing collection
+      const submissionRef = doc(db, 'paymentSubmissions', user.uid);
+      await deleteDoc(submissionRef);
+
       toast({
         title: 'Removed',
         description: 'Your payment information has been removed.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting feedback:", error);
+       let description = 'Could not remove your payment information.';
+       if (error.code === 'permission-denied') {
+        description = "Permission Denied. Please update your Firestore security rules to allow updates to 'users' and deletes on 'paymentSubmissions' collections.";
+      }
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Could not remove your payment information.',
+        description: description,
       });
     }
   };
