@@ -142,7 +142,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         const newUserDocRef = doc(db, "users", firebaseUser.uid);
-        await setDoc(newUserDocRef, {
+        const newUsernameDocRef = doc(db, 'usernames', username.toLowerCase());
+
+        const batch = writeBatch(db);
+
+        batch.set(newUserDocRef, {
             uid: firebaseUser.uid,
             name: name,
             username: username.toLowerCase(),
@@ -156,6 +160,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             followers: [], 
             following: [], 
         });
+
+        batch.set(newUsernameDocRef, { uid: firebaseUser.uid });
+
+        await batch.commit();
         
         router.push('/');
 
@@ -225,10 +233,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userDocRef = doc(db, 'users', currentUser.uid);
       batch.delete(userDocRef);
 
-      // 3. Delete username document (if it exists)
+      // 3. Delete username document
       if (currentUserData.username) {
-          const usernameDocRef = doc(db, 'usernames', currentUserData.username.toLowerCase());
-          batch.delete(usernameDocRef);
+        const usernameDocRef = doc(db, 'usernames', currentUserData.username.toLowerCase());
+        const usernameDoc = await getDoc(usernameDocRef);
+        // Ensure we are only deleting the username doc if it belongs to the current user
+        if (usernameDoc.exists() && usernameDoc.data().uid === currentUser.uid) {
+            batch.delete(usernameDocRef);
+        }
       }
 
       // Commit all Firestore deletions
