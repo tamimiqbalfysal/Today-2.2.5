@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -25,6 +26,7 @@ interface SharePostDialogProps {
     content: string,
     contentBangla: string,
     file: File | null,
+    fileBangla: File | null,
     postType: 'original' | 'share',
     sharedPostId: string
   ) => Promise<void>;
@@ -45,7 +47,7 @@ export function SharePostDialog({
 
     setIsSubmitting(true);
     try {
-      await onSharePost(content, '', null, 'share', postToShare.id);
+      await onSharePost(content, '', null, null, 'share', postToShare.id);
       setContent('');
       onOpenChange(false);
     } catch (error) {

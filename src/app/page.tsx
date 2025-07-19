@@ -227,29 +227,35 @@ export default function TodayPage() {
     };
 
     const handleAddPost = async (
-    content: string, 
-    contentBangla: string,
-    file: File | null, 
-    postType: 'original' | 'share' = 'original', 
-    sharedPostId?: string
-  ) => {
-      if (!user || !db || (!content.trim() && !file && postType === 'original')) return;
-      
+      content: string,
+      contentBangla: string,
+      file: File | null,
+      fileBangla: File | null,
+      postType: 'original' | 'share' = 'original',
+      sharedPostId?: string
+    ) => {
+      if (!user || !db || (!content.trim() && !file && !contentBangla.trim() && !fileBangla && postType === 'original')) return;
+  
       try {
         let mediaURL: string | undefined = undefined;
         let mediaType: 'image' | 'video' | undefined = undefined;
-
+        let mediaURLBangla: string | undefined = undefined;
+        let mediaTypeBangla: 'image' | 'video' | undefined = undefined;
+  
         if (file && storage) {
           const storageRef = ref(storage, `posts/${user.uid}/${Date.now()}_${file.name}`);
           const snapshot = await uploadBytes(storageRef, file);
           mediaURL = await getDownloadURL(snapshot.ref);
-          if (file.type.startsWith('image/')) {
-            mediaType = 'image';
-          } else if (file.type.startsWith('video/')) {
-            mediaType = 'video';
-          }
+          mediaType = file.type.startsWith('image/') ? 'image' : 'video';
         }
 
+        if (fileBangla && storage) {
+          const storageRef = ref(storage, `posts/${user.uid}/${Date.now()}_${fileBangla.name}_bn`);
+          const snapshot = await uploadBytes(storageRef, fileBangla);
+          mediaURLBangla = await getDownloadURL(snapshot.ref);
+          mediaTypeBangla = fileBangla.type.startsWith('image/') ? 'image' : 'video';
+        }
+  
         const newPostData: Omit<Post, 'id' | 'sharedPost'> = {
           authorId: user.uid,
           authorName: user.name,
@@ -262,15 +268,16 @@ export default function TodayPage() {
           type: postType,
           ...(mediaURL && { mediaURL }),
           ...(mediaType && { mediaType }),
+          ...(mediaURLBangla && { mediaURLBangla }),
+          ...(mediaTypeBangla && { mediaTypeBangla }),
           ...(postType === 'share' && sharedPostId && { sharedPostId }),
         };
-
-
+  
         await addDoc(collection(db, 'posts'), newPostData);
         
         const userDocRef = doc(db, 'users', user.uid);
         await updateDoc(userDocRef, { credits: increment(10) });
-
+  
         toast({
           title: "Post Created!",
           description: "Your story has been successfully shared. (+10 Credits)",
@@ -310,7 +317,7 @@ export default function TodayPage() {
           
           throw error;
       }
-  };
+    };
   
   if (authLoading || (isDataLoading && user)) {
     return <TodaySkeleton />;

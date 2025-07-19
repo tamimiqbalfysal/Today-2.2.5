@@ -34,6 +34,8 @@ export interface Post {
   comments: Comment[];
   mediaURL?: string;
   mediaType?: 'image' | 'video';
+  mediaURLBangla?: string;
+  mediaTypeBangla?: 'image' | 'video';
   type: 'original' | 'share';
   sharedPostId?: string;
   sharedPost?: Post; // For client-side rendering

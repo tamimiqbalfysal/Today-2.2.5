@@ -40,6 +40,7 @@ interface PostCardProps {
     content: string,
     contentBangla: string,
     file: File | null,
+    fileBangla: File | null,
     postType: 'original' | 'share',
     sharedPostId: string
   ) => Promise<void>;
@@ -234,7 +235,9 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
         }
     };
 
-    const hasMultipleLanguages = post.content && post.contentBangla;
+    const hasEnglishContent = post.content || post.mediaURL;
+    const hasBanglaContent = post.contentBangla || post.mediaURLBangla;
+    const hasMultipleSlides = hasEnglishContent && hasBanglaContent;
 
     return (
         <>
@@ -268,30 +271,47 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                     </p>
                 </div>
                  
-                {post.content || post.contentBangla ? (
+                {(hasEnglishContent || hasBanglaContent) && (
                     <div className="mb-4">
                         <Carousel setApi={setCarouselApi} className="w-full">
                             <CarouselContent>
-                                {post.content && (
+                                {hasEnglishContent && (
                                     <CarouselItem>
-                                        <p className="font-sans text-card-foreground text-lg whitespace-pre-wrap">{post.content}</p>
+                                        <div className="space-y-4">
+                                            {post.content && <p className="font-sans text-card-foreground text-lg whitespace-pre-wrap">{post.content}</p>}
+                                            {post.mediaURL && (
+                                                <div className="relative w-full rounded-lg overflow-hidden aspect-video border">
+                                                    {post.mediaType === 'image' && <Image src={post.mediaURL} alt="Post media" layout="fill" objectFit="cover" />}
+                                                    {post.mediaType === 'video' && <video src={post.mediaURL} controls className="w-full h-full object-cover bg-black" />}
+                                                </div>
+                                            )}
+                                        </div>
                                     </CarouselItem>
                                 )}
-                                {post.contentBangla && (
+                                {hasBanglaContent && (
                                     <CarouselItem>
-                                        <p className="font-sans text-card-foreground text-lg whitespace-pre-wrap">{post.contentBangla}</p>
+                                        <div className="space-y-4">
+                                            {post.contentBangla && <p className="font-sans text-card-foreground text-lg whitespace-pre-wrap">{post.contentBangla}</p>}
+                                            {post.mediaURLBangla && (
+                                                <div className="relative w-full rounded-lg overflow-hidden aspect-video border">
+                                                    {post.mediaTypeBangla === 'image' && <Image src={post.mediaURLBangla} alt="Post media (Bangla)" layout="fill" objectFit="cover" />}
+                                                    {post.mediaTypeBangla === 'video' && <video src={post.mediaURLBangla} controls className="w-full h-full object-cover bg-black" />}
+                                                </div>
+                                            )}
+                                        </div>
                                     </CarouselItem>
                                 )}
                             </CarouselContent>
                         </Carousel>
-                        {hasMultipleLanguages && (
+                        {hasMultipleSlides && (
                             <div className="flex justify-center items-center mt-2 space-x-1">
                                 <Dot className={cn("h-6 w-6 cursor-pointer", currentSlide === 0 ? "text-primary" : "text-muted-foreground")} onClick={() => carouselApi?.scrollTo(0)} />
                                 <Dot className={cn("h-6 w-6 cursor-pointer", currentSlide === 1 ? "text-primary" : "text-muted-foreground")} onClick={() => carouselApi?.scrollTo(1)} />
                             </div>
                         )}
                     </div>
-                ) : null}
+                )}
+
 
                 {post.type === 'share' && post.sharedPost && (
                     <OriginalPostCard post={post.sharedPost} />
@@ -308,17 +328,6 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                         <Skeleton className="h-24 w-full rounded-lg" />
                     </div>
                  )}
-                
-                {post.mediaURL && (
-                    <div className="relative w-full rounded-lg mb-4 overflow-hidden aspect-video border">
-                        {post.mediaType === 'image' && (
-                            <Image src={post.mediaURL} alt="Post media" layout="fill" objectFit="cover" />
-                        )}
-                        {post.mediaType === 'video' && (
-                            <video src={post.mediaURL} controls className="w-full h-full object-cover bg-black" />
-                        )}
-                    </div>
-                )}
                 
                 <div className="flex items-center justify-between pt-3 border-t border-border">
                     <div className="flex items-center">
@@ -462,6 +471,7 @@ interface PostFeedProps {
     content: string,
     contentBangla: string,
     file: File | null,
+    fileBangla: File | null,
     postType: 'original' | 'share',
     sharedPostId: string
   ) => Promise<void>;
