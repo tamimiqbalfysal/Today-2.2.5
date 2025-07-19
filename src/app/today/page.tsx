@@ -3,7 +3,7 @@
 
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, addDoc, Timestamp, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, addDoc, Timestamp, doc, updateDoc, increment, runTransaction } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
@@ -80,6 +80,7 @@ export default function TodayPage() {
     contentBangla: string,
     file: File | null,
     fileBangla: File | null,
+    defenceCredit: number,
     postType: 'original' | 'share' = 'original',
     sharedPostId?: string
   ) => {
@@ -119,17 +120,33 @@ export default function TodayPage() {
           ...(mediaType && { mediaType }),
           ...(mediaURLBangla && { mediaURLBangla }),
           ...(mediaTypeBangla && { mediaTypeBangla }),
+          ...(defenceCredit > 0 && { defenceCredit }),
           ...(postType === 'share' && sharedPostId && { sharedPostId }),
         };
 
-        await addDoc(collection(db, 'posts'), newPostData);
-        
         const userDocRef = doc(db, 'users', user.uid);
-        await updateDoc(userDocRef, { credits: increment(10) });
+
+        await runTransaction(db, async (transaction) => {
+          const userDoc = await transaction.get(userDocRef);
+          if (!userDoc.exists()) {
+            throw "User does not exist!";
+          }
+          
+          const currentCredits = userDoc.data().credits || 0;
+          if (currentCredits < defenceCredit) {
+            throw new Error("You do not have enough credits.");
+          }
+
+          const postCollectionRef = collection(db, 'posts');
+          transaction.set(doc(postCollectionRef), newPostData);
+
+          const creditChange = 10 - defenceCredit;
+          transaction.update(userDocRef, { credits: increment(creditChange) });
+        });
 
         toast({
           title: "Post Created!",
-          description: "Your story has been successfully shared. (+10 Credits)",
+          description: `Your story has been shared. Credits changed by ${10 - defenceCredit}.`,
         });
         
         router.push('/');
@@ -137,7 +154,13 @@ export default function TodayPage() {
       } catch (error: any) {
           console.error("Error adding post:", error);
           
-          if (error.code === 'storage/unauthorized') {
+          if (error.message === "You do not have enough credits.") {
+             toast({
+                variant: "destructive",
+                title: "Insufficient Credits",
+                description: error.message,
+             });
+          } else if (error.code === 'storage/unauthorized') {
             toast({
                 id: 'storage-permission-error',
                 variant: "destructive",
@@ -163,7 +186,7 @@ export default function TodayPage() {
              toast({
                 variant: "destructive",
                 title: "Could Not Create Post",
-                description: "An unexpected error occurred while creating your post.",
+                description: error.message || "An unexpected error occurred while creating your post.",
              });
           }
           
@@ -183,16 +206,10 @@ export default function TodayPage() {
              <div className="container mx-auto max-w-2xl p-4 flex-1">
                 <div className="space-y-6">
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline">Share a New Tale</CardTitle>
-                            <CardDescription>What magical things are happening today?</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <CreatePostForm 
-                                user={user!} 
-                                onAddPost={handleAddPost}
-                            />
-                        </CardContent>
+                        <CreatePostForm 
+                            user={user!} 
+                            onAddPost={handleAddPost}
+                        />
                     </Card>
                 </div>
             </div>

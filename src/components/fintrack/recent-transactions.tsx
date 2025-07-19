@@ -41,6 +41,7 @@ interface PostCardProps {
     contentBangla: string,
     file: File | null,
     fileBangla: File | null,
+    defenceCredit: number,
     postType: 'original' | 'share',
     sharedPostId: string
   ) => Promise<void>;
@@ -472,6 +473,7 @@ interface PostFeedProps {
     contentBangla: string,
     file: File | null,
     fileBangla: File | null,
+    defenceCredit: number,
     postType: 'original' | 'share',
     sharedPostId: string
   ) => Promise<void>;

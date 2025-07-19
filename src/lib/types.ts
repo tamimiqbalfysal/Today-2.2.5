@@ -42,6 +42,7 @@ export interface Post {
   category?: string;
   reviewCount?: number;
   averageRating?: number;
+  defenceCredit?: number;
 }
 
 export interface Review {
