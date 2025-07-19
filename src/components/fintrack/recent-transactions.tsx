@@ -256,9 +256,13 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
     const isOffenceCreditSufficient = offenceCreditValue > defenceCreditValue;
 
     const handleDeleteClick = () => {
-        if (isAuthor && onDelete) {
+        if (onDelete) {
             onDelete(post.id, post.mediaURL);
-        } else if (!isAuthor && onMakePostPrivate) {
+        }
+    };
+
+    const handleMakePrivateClick = () => {
+        if (onMakePostPrivate) {
             onMakePostPrivate(post, offenceCreditValue);
         }
     };
@@ -301,7 +305,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                     )}
                 </div>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <Button variant="destructive" onClick={handleDeleteClick}>Delete Post</Button>
                     <AlertDialogAction
                         onClick={handleMakePublicClick}
                         disabled={!newDefenceCreditValue || !hasEnoughNewDefenceCredits}
@@ -490,7 +494,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    onClick={handleDeleteClick}
+                                    onClick={isAuthor ? handleDeleteClick : handleMakePrivateClick}
                                     disabled={!isAuthor && (!isOffenceCreditSufficient || !hasEnoughOffenceCredits)}
                                 >
                                     {isAuthor ? 'Delete' : 'Make Private'}
