@@ -69,9 +69,9 @@ export function FloatingCounterButton() {
             className="relative flex items-center justify-center cursor-pointer text-secondary-foreground"
             aria-label={`You have ${credits} credits and notifications`}
         >
-            <BellShapeButton className="h-20 w-20 text-secondary-foreground drop-shadow-lg" />
+            <BellShapeButton className="h-20 w-20 text-white drop-shadow-lg" />
             <div className="absolute bottom-6 flex flex-col items-center justify-center">
-                <span className="text-sm font-bold leading-none text-secondary-foreground">{formattedCredits}</span>
+                <span className="text-sm font-bold leading-none text-white">{formattedCredits}</span>
             </div>
              {unreadCount > 0 && (
                 <div className="absolute top-4 right-5 flex items-center justify-center bg-orange-500 text-white text-xs font-bold rounded-full h-5 w-5 border-2 border-background">
