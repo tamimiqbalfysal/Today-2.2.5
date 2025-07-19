@@ -415,37 +415,6 @@ export default function ProductDetailPage() {
           
           <div className="mt-16 space-y-12">
             <Card>
-              <CardHeader>
-                  <CardTitle>Write a Review</CardTitle>
-                  <CardDescription>Share your thoughts on this product with the community.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                  <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">Your Rating:</p>
-                      <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                              <Star
-                                  key={i}
-                                  className={cn("h-6 w-6 cursor-pointer", i < rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")}
-                                  onClick={() => setRating(i + 1)}
-                              />
-                          ))}
-                      </div>
-                  </div>
-                  <Textarea
-                      placeholder="Tell us what you liked or disliked..."
-                      value={reviewComment}
-                      onChange={(e) => setReviewComment(e.target.value)}
-                      disabled={isSubmittingReview}
-                  />
-                  <Button onClick={handleSubmitReview} disabled={isSubmittingReview || rating === 0 || !reviewComment.trim()}>
-                      <Send className="mr-2 h-4 w-4" />
-                      {isSubmittingReview ? "Submitting..." : "Submit Review"}
-                  </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
                 <CardHeader>
                     <CardTitle>Customer Reviews ({reviewCount})</CardTitle>
                 </CardHeader>
@@ -475,6 +444,37 @@ export default function ProductDetailPage() {
                         <p className="text-center text-muted-foreground">No reviews yet. Be the first to share your thoughts!</p>
                     )}
                 </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                  <CardTitle>Write a Review</CardTitle>
+                  <CardDescription>Share your thoughts on this product with the community.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">Your Rating:</p>
+                      <div className="flex items-center">
+                          {[...Array(5)].map((_, i) => (
+                              <Star
+                                  key={i}
+                                  className={cn("h-6 w-6 cursor-pointer", i < rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")}
+                                  onClick={() => setRating(i + 1)}
+                              />
+                          ))}
+                      </div>
+                  </div>
+                  <Textarea
+                      placeholder="Tell us what you liked or disliked..."
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      disabled={isSubmittingReview}
+                  />
+                  <Button onClick={handleSubmitReview} disabled={isSubmittingReview || rating === 0 || !reviewComment.trim()}>
+                      <Send className="mr-2 h-4 w-4" />
+                      {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                  </Button>
+              </CardContent>
             </Card>
           </div>
         </div>
