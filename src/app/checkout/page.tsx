@@ -10,13 +10,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/cart-context';
-import { X, ShoppingCart } from 'lucide-react';
+import { X, ShoppingCart, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { CartItem } from '@/contexts/cart-context';
 
 export default function CheckoutPage() {
-  const { cartItems, removeFromCart, updateQuantity, clearCart, cartTotal, cartCount, addPurchasedProducts, lastViewedProductId } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, clearCart, cartTotal, cartCount, addPurchasedProducts } = useCart();
   const { toast } = useToast();
   const router = useRouter();
+  const [isOrderComplete, setIsOrderComplete] = useState(false);
+  const [purchasedItems, setPurchasedItems] = useState<CartItem[]>([]);
 
   const handleProceedToPayment = () => {
     toast({
@@ -27,16 +30,13 @@ export default function CheckoutPage() {
     // Add items to purchased list
     const purchasedIds = cartItems.map(item => item.product.id);
     addPurchasedProducts(purchasedIds);
+    setPurchasedItems([...cartItems]);
     
     // Clear the cart
     clearCart();
 
-    // Redirect back to the last product viewed, if available
-    if (lastViewedProductId) {
-      router.push(`/attom/${lastViewedProductId}`);
-    } else {
-      router.push('/attom');
-    }
+    // Show order complete screen
+    setIsOrderComplete(true);
   };
   
   const getPrice = (content: string) => {
@@ -51,11 +51,47 @@ export default function CheckoutPage() {
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-primary">
-              Your Shopping Cart
+              {isOrderComplete ? 'Order Successful!' : 'Your Shopping Cart'}
             </h1>
+            {isOrderComplete && (
+              <p className="mt-2 text-muted-foreground">Thank you for your purchase. Please rate the products you bought.</p>
+            )}
           </div>
 
-          {cartCount > 0 ? (
+          {isOrderComplete ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Items</CardTitle>
+              </CardHeader>
+              <CardContent className="divide-y">
+                {purchasedItems.map(item => (
+                  <div key={item.product.id} className="flex items-center gap-4 py-4">
+                    <Image
+                      src={item.product.mediaURL!}
+                      alt={item.product.authorName}
+                      width={80}
+                      height={80}
+                      className="rounded-md object-cover aspect-square"
+                    />
+                    <div className="flex-1 space-y-1">
+                      <p className="font-semibold">{item.product.authorName}</p>
+                      <p className="text-sm text-muted-foreground">${getPrice(item.product.content).toFixed(2)}</p>
+                    </div>
+                    <Button asChild>
+                      <Link href={`/attom/${item.product.id}`}>
+                        <Star className="mr-2 h-4 w-4" /> Rate & Review
+                      </Link>
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+              <CardFooter>
+                 <Button asChild variant="outline" className="w-full">
+                    <Link href="/attom">Continue Shopping</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ) : cartCount > 0 ? (
             <div className="grid md:grid-cols-3 gap-8">
               <div className="md:col-span-2">
                 <Card>
