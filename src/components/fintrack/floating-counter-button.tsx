@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -64,7 +65,7 @@ export function FloatingCounterButton() {
             className="relative flex items-center justify-center cursor-pointer text-secondary-foreground"
             aria-label={`You have ${credits} credits and notifications`}
         >
-            <BellShapeButton className="h-20 w-20 text-secondary fill-current drop-shadow-lg" />
+            <BellShapeButton className="h-20 w-20 text-transparent drop-shadow-lg" />
             <div className="absolute bottom-6 flex flex-col items-center justify-center">
                 <span className="text-sm font-bold leading-none text-secondary-foreground">{formattedCredits}</span>
             </div>
