@@ -104,7 +104,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
               placeholder={`What's happening, ${user.name}?`}
               className="flex-1 p-3 rounded-lg bg-secondary border-border focus:outline-none focus:ring-2 focus:ring-primary text-secondary-foreground placeholder:text-muted-foreground text-sm min-h-[6rem]"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => setContent(e.target.value.replace(/[^a-zA-Z0-9\s.,!?'"()\-&%$#@*+=\[\]{}:;<>|/\\~`^]/g, ''))}
               disabled={isSubmitting}
             />
             {filePreview && (
