@@ -138,7 +138,10 @@ export default function TodayPage() {
                 }
 
                 if (isLiking) {
-                    transaction.update(postRef, { likes: arrayUnion(likerId) });
+                    transaction.update(postRef, { 
+                        likes: arrayUnion(likerId),
+                        defenceCredit: increment(1) 
+                    });
                     transaction.update(authorRef, { followers: arrayUnion(likerId) });
                     transaction.update(likerRef, { following: arrayUnion(authorId) });
 
@@ -157,7 +160,10 @@ export default function TodayPage() {
                         transaction.update(authorRef, { unreadNotifications: true });
                     }
                 } else {
-                    transaction.update(postRef, { likes: arrayRemove(likerId) });
+                    transaction.update(postRef, { 
+                        likes: arrayRemove(likerId),
+                        defenceCredit: increment(-1) 
+                    });
                     transaction.update(authorRef, { followers: arrayRemove(likerId) });
                     transaction.update(likerRef, { following: arrayRemove(authorId) });
 
@@ -433,7 +439,7 @@ export default function TodayPage() {
             transaction.update(authorRef, { unreadNotifications: true });
         });
         
-        toast({ title: 'Success!', description: 'The post has been made private.' });
+        toast({ title: 'Success!', description: 'The post has been deleted.' });
 
       } catch (error: any) {
         console.error("Error during offence action:", error);

@@ -181,9 +181,9 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
     const { toast } = useToast();
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
-    const hasFollowed = useMemo(() => 
-        currentUser && author?.followers ? author.followers.includes(currentUser.uid) : false,
-    [author, currentUser]);
+    const hasSaved = useMemo(() => 
+        currentUser && post.likes ? post.likes.includes(currentUser.uid) : false,
+    [post, currentUser]);
     
     const [isExpanded, setIsExpanded] = useState(false);
     const [commentText, setCommentText] = useState("");
@@ -196,9 +196,9 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
         onLike(post.id, post.authorId);
     };
     
-    const handleIncreaseClick = () => {
+    const handleSaveClick = () => {
       // If user has already followed, this button only expands/collapses
-      if (hasFollowed) {
+      if (hasSaved) {
         setIsExpanded(prev => !prev);
       } else {
         // If not followed, following also expands the view
@@ -557,18 +557,18 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                     </AnimatePresence>
                     
                     <Button 
-                      variant={hasFollowed ? "default" : "outline"}
+                      variant={hasSaved ? "default" : "outline"}
                       className={cn(
                           "w-full text-base",
-                           hasFollowed && "bg-black text-white hover:bg-black/90",
-                           !hasFollowed && "bg-white text-black hover:bg-neutral-100 border-black"
+                           hasSaved && "bg-black text-white hover:bg-black/90",
+                           !hasSaved && "bg-white text-black hover:bg-neutral-100 border-black"
                       )}
-                      onClick={handleIncreaseClick}
+                      onClick={handleSaveClick}
                       disabled={!currentUser || isAuthor}
                     >
-                        <span className="font-semibold">{hasFollowed ? 'Saved' : 'Save'}</span>
-                         {author?.followers && author.followers.length > 0 && (
-                            <span className="ml-2 font-semibold">{author.followers.length}</span>
+                        <span className="font-semibold">{hasSaved ? 'Saved' : 'Save'}</span>
+                         {post.likes && post.likes.length > 0 && (
+                            <span className="ml-2 font-semibold">{post.likes.length}</span>
                         )}
                     </Button>
 
