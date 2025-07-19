@@ -310,7 +310,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                         onClick={handleMakePublicClick}
                         disabled={!newDefenceCreditValue || !hasEnoughNewDefenceCredits}
                     >
-                        Post Again
+                        Publish Again
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
