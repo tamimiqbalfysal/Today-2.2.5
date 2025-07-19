@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import type { Post, User, Comment } from "@/lib/types";
@@ -374,10 +373,10 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                                         This action cannot be undone. This will permanently delete your post.
                                         {(post.defenceCredit ?? 0) > 0 && (
                                             <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-md">
-                                                <p className="text-sm text-yellow-900 dark:text-yellow-200 flex items-center gap-2">
+                                                <div className="text-sm text-yellow-900 dark:text-yellow-200 flex items-center gap-2">
                                                     <Shield className="h-4 w-4" />
                                                     You will be refunded <span className="font-bold">{post.defenceCredit}</span> Defence Credits.
-                                                </p>
+                                                </div>
                                             </div>
                                         )}
                                     </AlertDialogDescription>
