@@ -30,8 +30,9 @@ function ProductCard({ product, onDelete }: { product: Product, onDelete: (produ
     });
   };
 
-  const price = product.content.substring(product.content.indexOf('\n') + 1);
-  const description = product.content.substring(0, product.content.indexOf('\n'));
+  const priceMatch = product.content.match(/(\d+(\.\d+)?)$/);
+  const price = priceMatch ? parseFloat(priceMatch[1]).toFixed(2) : '0.00';
+  const description = priceMatch ? product.content.substring(0, priceMatch.index).trim() : product.content;
 
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col">
@@ -160,8 +161,15 @@ export default function TribePage() {
   };
 
   const handleDeleteProduct = async (productId: string, mediaUrl?: string) => {
-    if (!db || !storage) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Firebase not configured.' });
+    if (!db || !storage || !user) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to delete products.' });
+        return;
+    }
+    
+    // Find the product to ensure the current user is the author
+    const productToDelete = products.find(p => p.id === productId);
+    if (!productToDelete || productToDelete.authorId !== user.uid) {
+        toast({ variant: 'destructive', title: 'Permission Denied', description: 'You can only delete your own products.' });
         return;
     }
 
@@ -170,7 +178,6 @@ export default function TribePage() {
         if (mediaUrl) {
             const storageRef = ref(storage, mediaUrl);
             await deleteObject(storageRef).catch(err => {
-                // It's okay if the object doesn't exist, we can ignore that error.
                 if (err.code !== 'storage/object-not-found') throw err;
             });
         }
