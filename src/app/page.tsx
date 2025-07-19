@@ -356,11 +356,6 @@ export default function TodayPage() {
           if (postData.authorId !== user.uid) {
             throw new Error("You can only delete your own posts.");
           }
-
-          if (postData.defenceCredit && postData.defenceCredit > 0) {
-              const userRef = doc(db, 'users', user.uid);
-              transaction.update(userRef, { credits: increment(postData.defenceCredit) });
-          }
           
           transaction.delete(postRef);
         });
@@ -420,7 +415,6 @@ export default function TodayPage() {
             
             // 1. Update credits
             transaction.update(attackerRef, { credits: increment(-offenceCredit) });
-            transaction.update(authorRef, { credits: increment(defenceCredit) });
             
             // 2. Make Post Private and store the offence credit amount
             transaction.update(postRef, { isPrivate: true, offenceCredit: offenceCredit });
@@ -439,7 +433,7 @@ export default function TodayPage() {
             transaction.update(authorRef, { unreadNotifications: true });
         });
         
-        toast({ title: 'Success!', description: 'The post has been deleted.' });
+        toast({ title: 'Success!', description: 'The post has been made private.' });
 
       } catch (error: any) {
         console.error("Error during offence action:", error);

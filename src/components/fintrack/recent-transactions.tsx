@@ -467,14 +467,11 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                                             ? "This action cannot be undone. This will permanently delete this post." 
                                             : "This action will make this post private, so only the author can see it."}
                                         </div>
-                                        {defenceCreditValue > 0 && (
+                                        {defenceCreditValue > 0 && !isAuthor && (
                                             <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-md">
                                                 <div className="text-sm text-yellow-900 dark:text-yellow-200 flex items-center gap-2">
                                                     <Shield className="h-4 w-4" />
-                                                     {isAuthor 
-                                                        ? <>You will be refunded <span className="font-bold">{defenceCreditValue}</span> Defence Credits.</>
-                                                        : <>This post has a Defence Credit of <span className="font-bold">{defenceCreditValue}</span>.</>
-                                                     }
+                                                    This post has a Defence Credit of <span className="font-bold">{defenceCreditValue}</span>.
                                                 </div>
                                             </div>
                                         )}
