@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -11,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Copy, Gift, BrainCircuit } from 'lucide-react';
+import { Copy, Gift, BrainCircuit, BookOpenCheck } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AdminPage() {
   const { toast } = useToast();
@@ -127,6 +129,26 @@ export default function AdminPage() {
                   )}
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpenCheck className="text-primary" />
+                    "Think" Course Settings
+                  </CardTitle>
+                  <CardDescription>
+                    Manage the date and meeting link for the "Think" online course.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild className="w-full">
+                        <Link href="/admin/think-settings">
+                            Go to Course Settings
+                        </Link>
+                    </Button>
+                </CardContent>
+              </Card>
+
             </div>
           </div>
         </main>

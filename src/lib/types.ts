@@ -85,3 +85,8 @@ export interface Product {
   createdAt: Timestamp;
   rating?: number;
 }
+
+export interface ThinkCourse {
+  date: Timestamp;
+  meetLink: string;
+}
