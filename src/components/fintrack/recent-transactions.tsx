@@ -308,9 +308,6 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                         <Button variant="ghost" size="icon" onClick={() => setIsShareDialogOpen(true)} disabled={!currentUser}>
                             <Share2 className="h-6 w-6" />
                         </Button>
-                        <Button variant="ghost" size="icon">
-                            <Star className="h-6 w-6" />
-                        </Button>
                         {isAuthor && onDelete && (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -337,6 +334,9 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                                 </AlertDialogContent>
                             </AlertDialog>
                         )}
+                        <Button variant="ghost" size="icon">
+                            <Star className="h-6 w-6" />
+                        </Button>
                     </div>
                 </div>
 
