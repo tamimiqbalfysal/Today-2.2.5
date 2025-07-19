@@ -250,9 +250,18 @@ export default function ProductDetailPage() {
         toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
         setRating(0);
         setReviewComment('');
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error submitting review:", error);
-        toast({ variant: "destructive", title: "Error", description: "Could not submit your review." });
+        let description = "Could not submit your review.";
+        if (error.code === 'permission-denied') {
+            description = "Permission Denied. Please check your Firestore security rules. You need to allow 'create' on 'posts/{postId}/reviews' and 'update' on the 'posts' collection for authenticated users.";
+        }
+        toast({ 
+            variant: "destructive", 
+            title: "Review Error", 
+            description: description,
+            duration: 10000,
+        });
     } finally {
         setIsSubmittingReview(false);
     }
