@@ -362,7 +362,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                         {onDelete && (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" disabled={!isAuthor}>
+                                    <Button variant="ghost" size="icon">
                                         <Trash2 className="h-6 w-6" />
                                     </Button>
                                 </AlertDialogTrigger>
@@ -371,12 +371,12 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                     <AlertDialogDescription asChild>
                                         <div>
-                                            <p>This action cannot be undone. This will permanently delete your post.</p>
+                                            <p>This action cannot be undone. This will permanently delete this post.</p>
                                             {(post.defenceCredit ?? 0) > 0 && (
                                                 <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-md">
                                                     <div className="text-sm text-yellow-900 dark:text-yellow-200 flex items-center gap-2">
                                                         <Shield className="h-4 w-4" />
-                                                        You will be refunded <span className="font-bold">{post.defenceCredit}</span> Defence Credits.
+                                                         This post has a Defence Credit of <span className="font-bold">{post.defenceCredit}</span>.
                                                     </div>
                                                 </div>
                                             )}
@@ -388,6 +388,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                                     <AlertDialogAction
                                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                         onClick={() => onDelete(post.id, post.mediaURL)}
+                                        disabled={!isAuthor}
                                     >
                                         Delete
                                     </AlertDialogAction>
