@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import Link from 'next/link';
 
 interface ThinkCodeDialogProps {
   open: boolean;
@@ -122,6 +123,9 @@ export function ThinkCodeDialog({ open, onOpenChange, userId }: ThinkCodeDialogP
           />
         </form>
         <DialogFooter>
+          <Button asChild variant="outline" onClick={() => onOpenChange(false)}>
+            <Link href="/think">Get Think Code</Link>
+          </Button>
           <Button type="submit" form="think-code-form" disabled={isVerifying || !code.trim()}>
             {isVerifying ? 'Verifying...' : 'Submit'}
           </Button>
