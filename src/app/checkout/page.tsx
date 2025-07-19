@@ -34,6 +34,8 @@ export default function CheckoutPage() {
     // Redirect back to the last product viewed, if available
     if (lastViewedProductId) {
       router.push(`/attom/${lastViewedProductId}`);
+    } else {
+      router.push('/attom');
     }
   };
   

@@ -33,9 +33,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [purchasedProductIds, setPurchasedProductIds] = useState<string[]>([]);
   
    useEffect(() => {
-    const storedPurchased = window.localStorage.getItem('purchasedProductIds');
-    if (storedPurchased) {
-      setPurchasedProductIds(JSON.parse(storedPurchased));
+    try {
+        const storedPurchased = window.localStorage.getItem('purchasedProductIds');
+        if (storedPurchased) {
+          setPurchasedProductIds(JSON.parse(storedPurchased));
+        }
+    } catch (error) {
+        console.error("Failed to parse purchasedProductIds from localStorage", error);
     }
   }, []);
 
@@ -81,7 +85,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addPurchasedProducts = useCallback((productIds: string[]) => {
     setPurchasedProductIds(prevIds => {
         const newIds = Array.from(new Set([...prevIds, ...productIds]));
-        window.localStorage.setItem('purchasedProductIds', JSON.stringify(newIds));
+        try {
+            window.localStorage.setItem('purchasedProductIds', JSON.stringify(newIds));
+        } catch (error) {
+            console.error("Failed to save purchasedProductIds to localStorage", error);
+        }
         return newIds;
     });
   }, []);
