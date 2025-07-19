@@ -21,7 +21,7 @@ import { AuthGuard } from '@/components/auth/auth-guard';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
-function ProductCard({ product, onDelete }: { product: Product, onDelete: (productId: string, mediaUrl?: string) => void }) {
+function ProductCard({ product, onDelete, currentUserId }: { product: Product, onDelete: (productId: string, mediaUrl?: string) => void, currentUserId?: string }) {
   const { toast } = useToast();
   const handleAddToCart = (productName: string) => {
     toast({
@@ -33,32 +33,36 @@ function ProductCard({ product, onDelete }: { product: Product, onDelete: (produ
   const priceMatch = product.content.match(/(\d+(\.\d+)?)$/);
   const price = priceMatch ? parseFloat(priceMatch[1]).toFixed(2) : '0.00';
   const description = priceMatch ? product.content.substring(0, priceMatch.index).trim() : product.content;
+  
+  const isOwner = product.authorId === currentUserId;
 
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col">
        <CardHeader className="flex-row gap-4 items-center justify-between p-4">
         <h3 className="text-lg font-semibold flex-grow truncate">{product.authorName}</h3>
-         <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive flex-shrink-0">
-                    <Trash2 className="h-5 w-5" />
-                </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete your product listing.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onDelete(product.id, product.mediaURL)} className="bg-destructive hover:bg-destructive/90">
-                        Delete
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+         {isOwner && (
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive flex-shrink-0">
+                        <Trash2 className="h-5 w-5" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your product listing.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(product.id, product.mediaURL)} className="bg-destructive hover:bg-destructive/90">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+         )}
       </CardHeader>
       <CardContent className="p-0 flex flex-col flex-grow">
         <div className="relative">
@@ -166,7 +170,6 @@ export default function TribePage() {
         return;
     }
     
-    // Find the product to ensure the current user is the author
     const productToDelete = products.find(p => p.id === productId);
     if (!productToDelete || productToDelete.authorId !== user.uid) {
         toast({ variant: 'destructive', title: 'Permission Denied', description: 'You can only delete your own products.' });
@@ -184,7 +187,7 @@ export default function TribePage() {
         toast({ title: 'Success', description: 'Product deleted successfully.' });
     } catch (error) {
         console.error("Error deleting product:", error);
-        toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the product.' });
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the product. Please ensure your Firestore security rules allow this action.' });
     }
   };
 
@@ -311,7 +314,7 @@ export default function TribePage() {
               ) : products.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {products.map(product => (
-                      <ProductCard key={product.id} product={product} onDelete={handleDeleteProduct} />
+                      <ProductCard key={product.id} product={product} onDelete={handleDeleteProduct} currentUserId={user?.uid} />
                     ))}
                 </div>
               ) : (
