@@ -24,7 +24,6 @@ import { Star, Zap, ArrowLeft, Edit, Upload, Save } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ReviewForm } from '@/components/fintrack/review-form';
 
 function ProductPageSkeleton() {
   return (
@@ -54,7 +53,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.productId as string;
   const router = useRouter();
-  const { addToCart, setLastViewedProductId, purchasedProductIds } = useCart();
+  const { addToCart, setLastViewedProductId } = useCart();
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   
@@ -72,10 +71,6 @@ export default function ProductDetailPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const hasPurchased = useMemo(() => {
-    return purchasedProductIds.includes(productId);
-  }, [purchasedProductIds, productId]);
-  
   useEffect(() => {
     setLastViewedProductId(productId);
     return () => setLastViewedProductId(null);
@@ -228,21 +223,6 @@ export default function ProductDetailPage() {
     }
   };
   
-  const onReviewSubmitted = (newReview: Review) => {
-    // Optimistically update local state for instant feedback
-    setReviews(prev => [newReview, ...prev]);
-    setProduct(prev => {
-        if (!prev) return null;
-        const newReviewCount = (prev.reviewCount || 0) + 1;
-        const newAverageRating = (((prev.averageRating || 0) * (prev.reviewCount || 0)) + newReview.rating) / newReviewCount;
-        return { 
-            ...prev, 
-            reviewCount: newReviewCount,
-            averageRating: newAverageRating
-        };
-    });
-  }
-
   const isOwner = currentUser?.uid === product?.authorId;
 
   if (isLoading) {
@@ -396,10 +376,6 @@ export default function ProductDetailPage() {
                     )}
                 </CardContent>
             </Card>
-
-            {hasPurchased && (
-              <ReviewForm productId={productId} onReviewSubmitted={onReviewSubmitted} />
-            )}
           </div>
         </div>
       </main>
