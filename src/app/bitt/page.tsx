@@ -59,7 +59,7 @@ export default function BittPage() {
                 onClick={() => setActiveSoftware('whiteboard')}
                 variant={activeSoftware === 'whiteboard' ? 'default' : 'outline'}
               >
-                <Brush className="mr-2" /> Whiteboard
+                <Brush className="mr-2" /> Tepantor
               </Button>
             </div>
             

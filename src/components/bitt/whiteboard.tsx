@@ -62,7 +62,7 @@ export function Whiteboard() {
   return (
     <Card className="w-full mx-auto shadow-lg">
       <CardHeader className="text-center">
-        <CardTitle>Whiteboard</CardTitle>
+        <CardTitle>Tepantor</CardTitle>
         <CardDescription>Let your creativity flow. Start drawing on the canvas below.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
