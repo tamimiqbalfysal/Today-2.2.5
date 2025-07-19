@@ -10,9 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/cart-context';
-import { X, ShoppingCart, Star } from 'lucide-react';
+import { X, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { CartItem } from '@/contexts/cart-context';
+import { ReviewForm } from '@/components/fintrack/review-form';
 
 export default function CheckoutPage() {
   const { cartItems, removeFromCart, updateQuantity, clearCart, cartTotal, cartCount, addPurchasedProducts } = useCart();
@@ -59,38 +60,38 @@ export default function CheckoutPage() {
           </div>
 
           {isOrderComplete ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Items</CardTitle>
-              </CardHeader>
-              <CardContent className="divide-y">
-                {purchasedItems.map(item => (
-                  <div key={item.product.id} className="flex items-center gap-4 py-4">
-                    <Image
-                      src={item.product.mediaURL!}
-                      alt={item.product.authorName}
-                      width={80}
-                      height={80}
-                      className="rounded-md object-cover aspect-square"
-                    />
-                    <div className="flex-1 space-y-1">
-                      <p className="font-semibold">{item.product.authorName}</p>
-                      <p className="text-sm text-muted-foreground">${getPrice(item.product.content).toFixed(2)}</p>
+            <div className="space-y-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Items</CardTitle>
+                </CardHeader>
+                <CardContent className="divide-y">
+                  {purchasedItems.map(item => (
+                    <div key={item.product.id} className="py-6 space-y-4">
+                      <div className="flex items-center gap-4">
+                        <Image
+                          src={item.product.mediaURL!}
+                          alt={item.product.authorName}
+                          width={80}
+                          height={80}
+                          className="rounded-md object-cover aspect-square"
+                        />
+                        <div className="flex-1 space-y-1">
+                          <p className="font-semibold">{item.product.authorName}</p>
+                          <p className="text-sm text-muted-foreground">${getPrice(item.product.content).toFixed(2)}</p>
+                        </div>
+                      </div>
+                      <ReviewForm productId={item.product.id} />
                     </div>
-                    <Button asChild>
-                      <Link href={`/attom/${item.product.id}`}>
-                        <Star className="mr-2 h-4 w-4" /> Rate & Review
-                      </Link>
-                    </Button>
-                  </div>
-                ))}
-              </CardContent>
-              <CardFooter>
-                 <Button asChild variant="outline" className="w-full">
-                    <Link href="/attom">Continue Shopping</Link>
-                </Button>
-              </CardFooter>
-            </Card>
+                  ))}
+                </CardContent>
+                <CardFooter>
+                  <Button asChild variant="outline" className="w-full">
+                      <Link href="/attom">Continue Shopping</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
           ) : cartCount > 0 ? (
             <div className="grid md:grid-cols-3 gap-8">
               <div className="md:col-span-2">

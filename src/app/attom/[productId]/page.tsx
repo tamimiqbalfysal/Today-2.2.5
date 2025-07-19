@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc, collection, addDoc, query, orderBy, onSnapshot, writeBatch, Timestamp, increment, runTransaction, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, orderBy, onSnapshot, writeBatch, Timestamp, increment, runTransaction, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from '@/lib/firebase';
 import type { Post as Product, Review } from '@/lib/types';
@@ -20,10 +20,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Star, Zap, ArrowLeft, Edit, Upload, Save, Send } from 'lucide-react';
+import { Star, Zap, ArrowLeft, Edit, Upload, Save } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ReviewForm } from '@/components/fintrack/review-form';
 
 function ProductPageSkeleton() {
   return (
@@ -62,10 +63,6 @@ export default function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
-  const [rating, setRating] = useState(0);
-  const [reviewComment, setReviewComment] = useState('');
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   // Edit mode state
   const [editedName, setEditedName] = useState('');
@@ -231,78 +228,20 @@ export default function ProductDetailPage() {
     }
   };
   
-  const handleSubmitReview = async () => {
-    if (!currentUser || !product || rating === 0 || !reviewComment.trim()) {
-        toast({
-            variant: "destructive",
-            title: "Missing Information",
-            description: "Please provide a rating and a comment for your review."
-        });
-        return;
-    }
-    setIsSubmittingReview(true);
-    try {
-        const productRef = doc(db, 'posts', product.id);
-        const newReviewRef = doc(collection(db, 'posts', product.id, 'reviews'));
-
-        await runTransaction(db, async (transaction) => {
-            const productDoc = await transaction.get(productRef);
-            if (!productDoc.exists()) throw "Product does not exist!";
-            
-            // Create the new review document
-            transaction.set(newReviewRef, {
-                authorId: currentUser.uid,
-                authorName: currentUser.name,
-                authorPhotoURL: currentUser.photoURL || '',
-                rating: rating,
-                comment: reviewComment,
-                timestamp: Timestamp.now()
-            });
-
-            // Update the product's aggregate review data
-            const currentReviewCount = productDoc.data().reviewCount || 0;
-            const currentAverageRating = productDoc.data().averageRating || 0;
-            const newReviewCount = currentReviewCount + 1;
-            const newAverageRating = ((currentAverageRating * currentReviewCount) + rating) / newReviewCount;
-            
-            transaction.update(productRef, {
-                reviewCount: newReviewCount,
-                averageRating: newAverageRating
-            });
-        });
-        
-        // Optimistically update local state for instant feedback
-        setProduct(prev => {
-            if (!prev) return null;
-            const newReviewCount = (prev.reviewCount || 0) + 1;
-            const newAverageRating = (((prev.averageRating || 0) * (prev.reviewCount || 0)) + rating) / newReviewCount;
-            return { 
-                ...prev, 
-                reviewCount: newReviewCount,
-                averageRating: newAverageRating
-            };
-        });
-
-        toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
-        setRating(0);
-        setReviewComment('');
-    } catch (error: any) {
-        console.error("Error submitting review:", error);
-        let description = "Could not submit your review.";
-        if (error.code === 'permission-denied') {
-            description = "Permission Denied. Please check your Firestore security rules. You need to allow 'create' on 'posts/{postId}/reviews' and 'update' on the 'posts' collection for authenticated users.";
-        }
-        toast({ 
-            variant: "destructive", 
-            title: "Review Error", 
-            description: description,
-            duration: 10000,
-        });
-    } finally {
-        setIsSubmittingReview(false);
-    }
-  };
-
+  const onReviewSubmitted = (newReview: Review) => {
+    // Optimistically update local state for instant feedback
+    setReviews(prev => [newReview, ...prev]);
+    setProduct(prev => {
+        if (!prev) return null;
+        const newReviewCount = (prev.reviewCount || 0) + 1;
+        const newAverageRating = (((prev.averageRating || 0) * (prev.reviewCount || 0)) + newReview.rating) / newReviewCount;
+        return { 
+            ...prev, 
+            reviewCount: newReviewCount,
+            averageRating: newAverageRating
+        };
+    });
+  }
 
   const isOwner = currentUser?.uid === product?.authorId;
 
@@ -459,36 +398,7 @@ export default function ProductDetailPage() {
             </Card>
 
             {hasPurchased && (
-              <Card>
-                <CardHeader>
-                    <CardTitle>Write a Review</CardTitle>
-                    <CardDescription>Share your thoughts on this product with the community.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">Your Rating:</p>
-                        <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                                <Star
-                                    key={i}
-                                    className={cn("h-6 w-6 cursor-pointer", i < rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")}
-                                    onClick={() => setRating(i + 1)}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                    <Textarea
-                        placeholder="Tell us what you liked or disliked..."
-                        value={reviewComment}
-                        onChange={(e) => setReviewComment(e.target.value)}
-                        disabled={isSubmittingReview}
-                    />
-                    <Button onClick={handleSubmitReview} disabled={isSubmittingReview || rating === 0 || !reviewComment.trim()}>
-                        <Send className="mr-2 h-4 w-4" />
-                        {isSubmittingReview ? "Submitting..." : "Submit Review"}
-                    </Button>
-                </CardContent>
-              </Card>
+              <ReviewForm productId={productId} onReviewSubmitted={onReviewSubmitted} />
             )}
           </div>
         </div>
