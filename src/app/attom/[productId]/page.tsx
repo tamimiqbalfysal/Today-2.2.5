@@ -22,8 +22,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Star, Zap, ArrowLeft, Edit, Upload, Save } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ReviewForm } from '@/components/fintrack/review-form';
 
 function ProductPageSkeleton() {
   return (
@@ -53,7 +55,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.productId as string;
   const router = useRouter();
-  const { addToCart, setLastViewedProductId } = useCart();
+  const { addToCart, setLastViewedProductId, purchasedProductIds } = useCart();
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   
@@ -156,10 +158,7 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     if (!product) return;
-    const priceMatch = product.content.match(/(\d+(\.\d+)?)$/);
-    const numericPrice = priceMatch ? parseFloat(priceMatch[1]).toFixed(2) : '0.00';
-    const productWithPrice = { ...product, content: numericPrice };
-    addToCart(productWithPrice, 1);
+    addToCart(product, 1);
     toast({
       title: 'Added to Cart',
       description: `Redirecting you to checkout...`,
@@ -224,6 +223,7 @@ export default function ProductDetailPage() {
   };
   
   const isOwner = currentUser?.uid === product?.authorId;
+  const hasPurchased = purchasedProductIds.includes(productId);
 
   if (isLoading) {
     return <ProductPageSkeleton />;
@@ -351,26 +351,29 @@ export default function ProductDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {reviews.length > 0 ? (
-                        reviews.map(review => (
-                            <div key={review.id} className="flex gap-4">
-                                <Avatar>
-                                    <AvatarImage src={review.authorPhotoURL} alt={review.authorName} />
-                                    <AvatarFallback>{review.authorName.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between">
-                                        <p className="font-semibold">{review.authorName}</p>
-                                        <p className="text-xs text-muted-foreground">{formatDistanceToNow(review.timestamp.toDate(), { addSuffix: true })}</p>
+                        reviews.map(review => {
+                           const profileLink = currentUser?.uid === review.authorId ? '/profile' : `/u/${review.authorId}`;
+                           return (
+                                <div key={review.id} className="flex gap-4">
+                                    <Avatar>
+                                        <AvatarImage src={review.authorPhotoURL} alt={review.authorName} />
+                                        <AvatarFallback>{review.authorName.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between">
+                                            <Link href={profileLink} className="font-semibold hover:underline">{review.authorName}</Link>
+                                            <p className="text-xs text-muted-foreground">{formatDistanceToNow(review.timestamp.toDate(), { addSuffix: true })}</p>
+                                        </div>
+                                        <div className="flex items-center gap-1 my-1">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} className={cn("h-4 w-4", i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                                            ))}
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">{review.comment}</p>
                                     </div>
-                                    <div className="flex items-center gap-1 my-1">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star key={i} className={cn("h-4 w-4", i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
-                                        ))}
-                                    </div>
-                                    <p className="text-sm text-muted-foreground">{review.comment}</p>
                                 </div>
-                            </div>
-                        ))
+                           )
+                        })
                     ) : (
                         <p className="text-center text-muted-foreground">No reviews yet. Be the first to share your thoughts!</p>
                     )}
