@@ -38,6 +38,7 @@ interface PostCardProps {
   currentUser?: User | null;
   onDelete?: (postId: string, mediaUrl?: string) => void;
   onMakePostPrivate?: (post: Post, offenceCredit: number) => void;
+  onMakePostPublic?: (postId: string, newDefenceCredit: number) => void;
   onLike?: (postId: string, authorId: string) => void;
   onComment?: (postId: string, commentText: string) => Promise<void>;
   onSharePost: (
@@ -107,7 +108,7 @@ function OriginalPostCard({ post }: { post: Post }) {
 }
 
 
-function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate, onLike, onComment, onSharePost }: PostCardProps) {
+function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate, onMakePostPublic, onLike, onComment, onSharePost }: PostCardProps) {
     const [post, setPost] = useState(initialPost);
     const [author, setAuthor] = useState<User | null>(null);
     const [isLoadingAuthor, setIsLoadingAuthor] = useState(true);
@@ -115,6 +116,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
     const [carouselApi, setCarouselApi] = useState<CarouselApi>();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [offenceCredit, setOffenceCredit] = useState('');
+    const [newDefenceCredit, setNewDefenceCredit] = useState('');
 
 
     useEffect(() => {
@@ -248,7 +250,9 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
 
     const defenceCreditValue = post.defenceCredit || 0;
     const offenceCreditValue = parseInt(offenceCredit, 10) || 0;
+    const newDefenceCreditValue = parseInt(newDefenceCredit, 10) || 0;
     const hasEnoughOffenceCredits = (currentUser?.credits || 0) >= offenceCreditValue;
+    const hasEnoughNewDefenceCredits = (currentUser?.credits || 0) >= newDefenceCreditValue;
     const isOffenceCreditSufficient = offenceCreditValue > defenceCreditValue;
 
     const handleDeleteClick = () => {
@@ -258,6 +262,56 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
             onMakePostPrivate(post, offenceCreditValue);
         }
     };
+    
+    const handleMakePublicClick = () => {
+        if (isAuthor && onMakePostPublic && newDefenceCreditValue > 0) {
+            onMakePostPublic(post.id, newDefenceCreditValue);
+        }
+    };
+
+
+    const makePublicDialog = (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <button disabled={!isAuthor}>
+                    <Lock className="h-4 w-4 text-muted-foreground" title="This post is private" />
+                </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Make Post Public</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Increase your Defence Credits to make this post public again. Your current total credits: {currentUser?.credits ?? 0}.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="space-y-2">
+                    <Label htmlFor="new-defence-credit">New Defence Credit</Label>
+                    <Input
+                        id="new-defence-credit"
+                        type="number"
+                        placeholder="e.g., 10"
+                        value={newDefenceCredit}
+                        onChange={(e) => setNewDefenceCredit(e.target.value)}
+                    />
+                    {!hasEnoughNewDefenceCredits && newDefenceCreditValue > 0 && (
+                        <p className="text-xs text-destructive flex items-center justify-start gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            You don't have enough credits.
+                        </p>
+                    )}
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={handleMakePublicClick}
+                        disabled={!newDefenceCreditValue || !hasEnoughNewDefenceCredits}
+                    >
+                        Make Public
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
 
     return (
         <>
@@ -279,7 +333,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                                     <p className="font-semibold text-lg text-orange-500 hover:underline">{post.authorName || 'Anonymous'}</p>
                                 </Link>
                                 {post.isPrivate && (
-                                    <Lock className="h-4 w-4 text-muted-foreground" title="This post is private" />
+                                     isAuthor ? makePublicDialog : <Lock className="h-4 w-4 text-muted-foreground" title="This post is private" />
                                 )}
                             </div>
                             {isLoadingAuthor ? (
@@ -527,6 +581,7 @@ interface PostFeedProps {
   currentUser?: User | null;
   onDeletePost: (postId: string, mediaUrl?: string) => void;
   onMakePostPrivate: (post: Post, offenceCredit: number) => void;
+  onMakePostPublic: (postId: string, newDefenceCredit: number) => void;
   onLikePost: (postId: string, authorId: string) => void;
   onCommentPost: (postId: string, commentText: string) => Promise<void>;
   onSharePost: (
@@ -540,7 +595,7 @@ interface PostFeedProps {
   ) => Promise<void>;
 }
 
-export function PostFeed({ posts, currentUser, onDeletePost, onMakePostPrivate, onLikePost, onCommentPost, onSharePost }: PostFeedProps) {
+export function PostFeed({ posts, currentUser, onDeletePost, onMakePostPrivate, onMakePostPublic, onLikePost, onCommentPost, onSharePost }: PostFeedProps) {
   if (!posts || posts.length === 0) {
     return (
       <div className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg">
@@ -571,6 +626,7 @@ export function PostFeed({ posts, currentUser, onDeletePost, onMakePostPrivate, 
                 currentUser={currentUser} 
                 onDelete={onDeletePost}
                 onMakePostPrivate={onMakePostPrivate}
+                onMakePostPublic={onMakePostPublic}
                 onLike={onLikePost} 
                 onComment={onCommentPost}
                 onSharePost={onSharePost}

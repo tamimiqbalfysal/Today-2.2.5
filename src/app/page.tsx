@@ -446,6 +446,66 @@ export default function TodayPage() {
         toast({ variant: 'destructive', title: 'Action Failed', description: error.message || 'An unexpected error occurred.' });
       }
     };
+    
+    const handleMakePostPublic = async (postId: string, newDefenceCredit: number) => {
+        if (!db || !user) {
+            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+            return;
+        }
+
+        try {
+            await runTransaction(db, async (transaction) => {
+                const userRef = doc(db, 'users', user.uid);
+                const postRef = doc(db, 'posts', postId);
+
+                const [userDoc, postDoc] = await Promise.all([
+                    transaction.get(userRef),
+                    transaction.get(postRef)
+                ]);
+
+                if (!userDoc.exists() || !postDoc.exists()) {
+                    throw new Error("User or Post not found.");
+                }
+                
+                if (postDoc.data().authorId !== user.uid) {
+                    throw new Error("You are not the author of this post.");
+                }
+
+                const userCredits = userDoc.data().credits || 0;
+                if (userCredits < newDefenceCredit) {
+                    throw new Error("You do not have enough credits.");
+                }
+
+                // Deduct credits from user
+                transaction.update(userRef, { credits: increment(-newDefenceCredit) });
+                // Add credits to post and make public
+                transaction.update(postRef, {
+                    defenceCredit: increment(newDefenceCredit),
+                    isPrivate: false
+                });
+
+                // Optional: Notify followers that the post is public again
+                const notificationRef = doc(collection(db, `users/${user.uid}/notifications`));
+                 transaction.set(notificationRef, {
+                    type: 'postMadePublic',
+                    senderId: user.uid,
+                    senderName: 'System',
+                    senderPhotoURL: '',
+                    postId: postId,
+                    timestamp: Timestamp.now(),
+                    read: false,
+                });
+                transaction.update(userRef, { unreadNotifications: true });
+            });
+
+            toast({ title: 'Success!', description: 'Your post is now public again.' });
+
+        } catch (error: any) {
+            console.error("Error making post public:", error);
+            toast({ variant: 'destructive', title: 'Action Failed', description: error.message || 'An unexpected error occurred.' });
+        }
+    };
+
 
   
   if (authLoading || (isDataLoading && user)) {
@@ -467,6 +527,7 @@ export default function TodayPage() {
                 currentUser={user}
                 onDeletePost={handleDeletePost}
                 onMakePostPrivate={handleMakePostPrivate}
+                onMakePostPublic={handleMakePostPublic}
                 onLikePost={handleLikePost}
                 onCommentPost={handleCommentPost}
                 onSharePost={handleAddPost}

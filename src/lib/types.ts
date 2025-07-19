@@ -69,7 +69,7 @@ export interface Comment {
 
 export interface Notification {
   id: string;
-  type: 'like' | 'postDeleted' | 'postMadePrivate';
+  type: 'like' | 'postDeleted' | 'postMadePrivate' | 'postMadePublic';
   senderId: string;
   senderName: string;
   senderPhotoURL: string;
