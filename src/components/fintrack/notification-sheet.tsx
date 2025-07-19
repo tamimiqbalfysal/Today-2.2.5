@@ -15,7 +15,7 @@ import type { Notification } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '../ui/scroll-area';
-import { Heart } from 'lucide-react';
+import { Heart, EyeOff, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 export function NotificationSheet({ children }: { children: React.ReactNode }) {
@@ -91,6 +91,26 @@ export function NotificationSheet({ children }: { children: React.ReactNode }) {
 function NotificationItem({ notification, onNotificationClick }: { notification: Notification; onNotificationClick: () => void; }) {
     const timestamp = notification.timestamp?.toDate ? notification.timestamp.toDate() : new Date();
     
+    let icon;
+    let text;
+
+    switch (notification.type) {
+        case 'like':
+            icon = <Heart className="h-4 w-4 text-red-500" />;
+            text = <><span className="font-semibold">{notification.senderName}</span> liked your post.</>;
+            break;
+        case 'postMadePrivate':
+            icon = <EyeOff className="h-4 w-4 text-orange-500" />;
+            text = <><span className="font-semibold">{notification.senderName}</span> made your post private.</>;
+            break;
+        case 'postDeleted':
+             icon = <Trash2 className="h-4 w-4 text-destructive" />;
+             text = <><span className="font-semibold">{notification.senderName}</span> deleted your post.</>;
+             break;
+        default:
+            return null;
+    }
+
     return (
         <Link href={`/#${notification.postId}`} onClick={onNotificationClick} className="block">
             <div className="flex items-start gap-4 p-4 rounded-lg hover:bg-accent">
@@ -100,12 +120,12 @@ function NotificationItem({ notification, onNotificationClick }: { notification:
                         <AvatarFallback>{notification.senderName.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5">
-                        <Heart className="h-4 w-4 text-red-500" />
+                        {icon}
                     </div>
                 </div>
                 <div className="flex-1">
                     <p className="text-sm">
-                        <span className="font-semibold">{notification.senderName}</span> liked your post.
+                        {text}
                     </p>
                     <p className="text-xs text-muted-foreground">
                         {formatDistanceToNow(timestamp, { addSuffix: true })}

@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from "firebase/firestore";
 
 export interface User {
@@ -43,6 +44,7 @@ export interface Post {
   reviewCount?: number;
   averageRating?: number;
   defenceCredit?: number;
+  isPrivate?: boolean;
 }
 
 export interface Review {
@@ -67,7 +69,7 @@ export interface Comment {
 
 export interface Notification {
   id: string;
-  type: 'like' | 'postDeleted';
+  type: 'like' | 'postDeleted' | 'postMadePrivate';
   senderId: string;
   senderName: string;
   senderPhotoURL: string;

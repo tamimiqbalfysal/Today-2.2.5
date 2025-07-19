@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -87,14 +88,10 @@ export default function TodayPage() {
     const q = query(postsCol, orderBy("timestamp", "desc"));
 
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      const fetchedPosts: Post[] = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data
-        } as Post;
-      });
-      
+      const fetchedPosts: Post[] = querySnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as Post))
+        .filter(post => !post.isPrivate || post.authorId === user?.uid);
+
       setPosts(fetchedPosts);
       setIsDataLoading(false);
     }, (error: any) => {
@@ -267,6 +264,7 @@ export default function TodayPage() {
           likes: [],
           comments: [],
           type: postType,
+          isPrivate: false,
           ...(mediaURL && { mediaURL }),
           ...(mediaType && { mediaType }),
           ...(mediaURLBangla && { mediaURLBangla }),
@@ -380,7 +378,7 @@ export default function TodayPage() {
       }
     };
     
-    const handleOffenceDelete = async (post: Post, offenceCredit: number) => {
+    const handleMakePostPrivate = async (post: Post, offenceCredit: number) => {
       if (!db || !storage || !user) {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
         return;
@@ -424,13 +422,13 @@ export default function TodayPage() {
             transaction.update(attackerRef, { credits: increment(-offenceCredit) });
             transaction.update(authorRef, { credits: increment(defenceCredit) });
             
-            // 2. Delete Post
-            transaction.delete(postRef);
+            // 2. Make Post Private
+            transaction.update(postRef, { isPrivate: true });
             
             // 3. Send notification to original author
             const notificationRef = doc(collection(db, `users/${authorId}/notifications`));
             transaction.set(notificationRef, {
-                type: 'postDeleted',
+                type: 'postMadePrivate',
                 senderId: attackerId,
                 senderName: user.name,
                 senderPhotoURL: user.photoURL || '',
@@ -440,26 +438,12 @@ export default function TodayPage() {
             });
             transaction.update(authorRef, { unreadNotifications: true });
         });
-
-        // 4. Delete media from storage (outside transaction)
-        if (post.mediaURL) {
-            const mediaRef = ref(storage, post.mediaURL);
-            await deleteObject(mediaRef).catch(err => {
-                if (err.code !== 'storage/object-not-found') console.warn("Failed to delete media file:", err);
-            });
-        }
-        if (post.mediaURLBangla) {
-            const mediaRefBangla = ref(storage, post.mediaURLBangla);
-            await deleteObject(mediaRefBangla).catch(err => {
-                if (err.code !== 'storage/object-not-found') console.warn("Failed to delete bangla media file:", err);
-            });
-        }
         
-        toast({ title: 'Success!', description: `Post deleted successfully.` });
+        toast({ title: 'Success!', description: `Post has been made private.` });
 
       } catch (error: any) {
-        console.error("Error during offence delete:", error);
-        toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message || 'An unexpected error occurred.' });
+        console.error("Error during offence action:", error);
+        toast({ variant: 'destructive', title: 'Action Failed', description: error.message || 'An unexpected error occurred.' });
       }
     };
 
@@ -482,7 +466,7 @@ export default function TodayPage() {
                 posts={posts} 
                 currentUser={user}
                 onDeletePost={handleDeletePost}
-                onOffenceDelete={handleOffenceDelete}
+                onMakePostPrivate={handleMakePostPrivate}
                 onLikePost={handleLikePost}
                 onCommentPost={handleCommentPost}
                 onSharePost={handleAddPost}

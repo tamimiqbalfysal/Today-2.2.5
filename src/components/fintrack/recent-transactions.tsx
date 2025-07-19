@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import type { Post, User, Comment } from "@/lib/types";
@@ -36,7 +37,7 @@ interface PostCardProps {
   post: Post;
   currentUser?: User | null;
   onDelete?: (postId: string, mediaUrl?: string) => void;
-  onOffenceDelete?: (post: Post, offenceCredit: number) => void;
+  onMakePostPrivate?: (post: Post, offenceCredit: number) => void;
   onLike?: (postId: string, authorId: string) => void;
   onComment?: (postId: string, commentText: string) => Promise<void>;
   onSharePost: (
@@ -106,7 +107,7 @@ function OriginalPostCard({ post }: { post: Post }) {
 }
 
 
-function PostCard({ post: initialPost, currentUser, onDelete, onOffenceDelete, onLike, onComment, onSharePost }: PostCardProps) {
+function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate, onLike, onComment, onSharePost }: PostCardProps) {
     const [post, setPost] = useState(initialPost);
     const [author, setAuthor] = useState<User | null>(null);
     const [isLoadingAuthor, setIsLoadingAuthor] = useState(true);
@@ -253,8 +254,8 @@ function PostCard({ post: initialPost, currentUser, onDelete, onOffenceDelete, o
     const handleDeleteClick = () => {
         if (isAuthor && onDelete) {
             onDelete(post.id, post.mediaURL);
-        } else if (!isAuthor && onOffenceDelete) {
-            onOffenceDelete(post, offenceCreditValue);
+        } else if (!isAuthor && onMakePostPrivate) {
+            onMakePostPrivate(post, offenceCreditValue);
         }
     };
 
@@ -389,12 +390,19 @@ function PostCard({ post: initialPost, currentUser, onDelete, onOffenceDelete, o
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription asChild>
                                     <div className="space-y-4">
-                                        <p>This action cannot be undone. This will permanently delete this post.</p>
+                                        <p>
+                                          {isAuthor 
+                                            ? "This action cannot be undone. This will permanently delete this post." 
+                                            : "This action will make this post private, so only the author can see it."}
+                                        </p>
                                         {(defenceCreditValue) > 0 && (
-                                            <div className="p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-md">
+                                            <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-md">
                                                 <div className="text-sm text-yellow-900 dark:text-yellow-200 flex items-center gap-2">
                                                     <Shield className="h-4 w-4" />
-                                                     This post has a Defence Credit of <span className="font-bold">{defenceCreditValue}</span>.
+                                                     {isAuthor 
+                                                        ? <>You will be refunded <span className="font-bold">{defenceCreditValue}</span> Defence Credits.</>
+                                                        : <>This post has a Defence Credit of <span className="font-bold">{defenceCreditValue}</span>.</>
+                                                     }
                                                 </div>
                                             </div>
                                         )}
@@ -426,7 +434,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onOffenceDelete, o
                                     onClick={handleDeleteClick}
                                     disabled={!isAuthor && (!isOffenceCreditSufficient || !hasEnoughOffenceCredits)}
                                 >
-                                    Delete
+                                    {isAuthor ? 'Delete' : 'Make Private'}
                                 </AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
@@ -513,7 +521,7 @@ interface PostFeedProps {
   posts: Post[];
   currentUser?: User | null;
   onDeletePost: (postId: string, mediaUrl?: string) => void;
-  onOffenceDelete: (post: Post, offenceCredit: number) => void;
+  onMakePostPrivate: (post: Post, offenceCredit: number) => void;
   onLikePost: (postId: string, authorId: string) => void;
   onCommentPost: (postId: string, commentText: string) => Promise<void>;
   onSharePost: (
@@ -527,7 +535,7 @@ interface PostFeedProps {
   ) => Promise<void>;
 }
 
-export function PostFeed({ posts, currentUser, onDeletePost, onOffenceDelete, onLikePost, onCommentPost, onSharePost }: PostFeedProps) {
+export function PostFeed({ posts, currentUser, onDeletePost, onMakePostPrivate, onLikePost, onCommentPost, onSharePost }: PostFeedProps) {
   if (!posts || posts.length === 0) {
     return (
       <div className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg">
@@ -557,7 +565,7 @@ export function PostFeed({ posts, currentUser, onDeletePost, onOffenceDelete, on
                 post={post} 
                 currentUser={currentUser} 
                 onDelete={onDeletePost}
-                onOffenceDelete={onOffenceDelete}
+                onMakePostPrivate={onMakePostPrivate}
                 onLike={onLikePost} 
                 onComment={onCommentPost}
                 onSharePost={onSharePost}
