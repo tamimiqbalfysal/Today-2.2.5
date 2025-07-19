@@ -5,8 +5,9 @@ import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, updateProfile, deleteUser, reauthenticateWithCredential, EmailAuthProvider, type User as FirebaseUser } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, storage } from '@/lib/firebase';
 import { doc, setDoc, onSnapshot, getDoc, runTransaction, collection, query, orderBy, Unsubscribe, updateDoc, writeBatch, where, getDocs, deleteDoc, arrayUnion } from 'firebase/firestore';
+import { ref, deleteObject } from "firebase/storage";
 import type { User as AppUser, Notification, Post } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -188,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const deleteAccount = async (password: string) => {
     const currentUser = auth?.currentUser;
     const currentUserData = user;
-    if (!auth || !currentUser || !db || !currentUserData) {
+    if (!auth || !currentUser || !db || !storage || !currentUserData) {
       throw new Error("User not found or Firebase not configured.");
     }
     
@@ -201,18 +202,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const batch = writeBatch(db);
 
-      // 1. Delete all posts by the user
+      // 1. Delete all posts by the user and their associated media
       const postsQuery = query(collection(db, 'posts'), where('authorId', '==', currentUser.uid));
       const postsSnapshot = await getDocs(postsQuery);
+      
+      const deletePromises: Promise<void>[] = [];
+      
       postsSnapshot.forEach(postDoc => {
         batch.delete(postDoc.ref);
+        const postData = postDoc.data() as Post;
+        if (postData.mediaURL) {
+            const mediaRef = ref(storage, postData.mediaURL);
+            deletePromises.push(deleteObject(mediaRef).catch(err => {
+                if (err.code !== 'storage/object-not-found') {
+                    console.error("Failed to delete media file:", err);
+                }
+            }));
+        }
       });
 
       // 2. Delete user document
       const userDocRef = doc(db, 'users', currentUser.uid);
       batch.delete(userDocRef);
 
-      // 3. Delete username document
+      // 3. Delete username document (if it exists)
       if (currentUserData.username) {
           const usernameDocRef = doc(db, 'usernames', currentUserData.username.toLowerCase());
           batch.delete(usernameDocRef);
@@ -220,6 +233,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Commit all Firestore deletions
       await batch.commit();
+      
+      // Wait for all media deletions to complete
+      await Promise.all(deletePromises);
       
       // Finally, delete the Firebase Auth user
       await deleteUser(currentUser);
