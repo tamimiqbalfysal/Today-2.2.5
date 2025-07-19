@@ -305,12 +305,12 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                     )}
                 </div>
                 <AlertDialogFooter>
-                    <Button variant="destructive" onClick={handleDeleteClick}>Delete Post</Button>
+                    <Button variant="destructive" onClick={handleDeleteClick}>Delete Permanently</Button>
                     <AlertDialogAction
                         onClick={handleMakePublicClick}
                         disabled={!newDefenceCreditValue || !hasEnoughNewDefenceCredits}
                     >
-                        Make Public
+                        Post Again
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -497,7 +497,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                                     onClick={isAuthor ? handleDeleteClick : handleMakePrivateClick}
                                     disabled={!isAuthor && (!isOffenceCreditSufficient || !hasEnoughOffenceCredits)}
                                 >
-                                    {isAuthor ? 'Delete' : 'Delete'}
+                                    Delete
                                 </AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
