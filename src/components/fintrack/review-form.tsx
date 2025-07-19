@@ -12,6 +12,7 @@ import { Star, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
+import { useRouter } from 'next/navigation';
 
 interface ReviewFormProps {
   productId: string;
@@ -21,13 +22,26 @@ interface ReviewFormProps {
 export function ReviewForm({ productId, onReviewSubmitted }: ReviewFormProps) {
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
 
   const [rating, setRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const handleSubmitReview = async () => {
-    if (!currentUser || !productId || rating === 0 || !reviewComment.trim()) {
+    if (!currentUser) {
+        toast({
+            variant: "destructive",
+            title: "Please Log In",
+            description: "You must be logged in to submit a review.",
+            action: (
+                <Button onClick={() => router.push('/login')}>Log In</Button>
+            ),
+        });
+        return;
+    }
+
+    if (!productId || rating === 0 || !reviewComment.trim()) {
         toast({
             variant: "destructive",
             title: "Missing Information",
