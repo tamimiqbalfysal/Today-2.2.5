@@ -77,21 +77,15 @@ export default function ThinkPage() {
 
   const checkRegistration = useCallback(async () => {
     if (!db) return;
-    
-    // For logged-in users, check their UID
-    if (user) {
-        const registrationRef = doc(db, 'think_registrations', user.uid);
-        const docSnap = await getDoc(registrationRef);
-        if (docSnap.exists()) {
-            setIsRegistered(true);
-            return;
-        }
+
+    let checkEmail = user?.email;
+
+    if (!checkEmail && typeof window !== 'undefined') {
+        checkEmail = localStorage.getItem('thinkCourseEmail');
     }
     
-    // For guests, check local storage
-    const localEmail = localStorage.getItem('thinkCourseEmail');
-    if (localEmail) {
-        const q = query(collection(db, "think_free_class_registrations"), where("email", "==", localEmail));
+    if (checkEmail) {
+        const q = query(collection(db, "think_free_class_registrations"), where("email", "==", checkEmail));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
             setIsRegistered(true);
@@ -249,29 +243,31 @@ export default function ThinkPage() {
                         <Input id="email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9" />
                        </div>
                     </div>
+                     <Button 
+                        className="w-full h-12 text-lg mt-4" 
+                        onClick={handleRegister} 
+                        disabled={isRegistered || isSubmitting || (registrations >= maxParticipants && !isRegistered)}
+                    >
+                        {isSubmitting ? (
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        ) : isRegistered ? (
+                        <>
+                            <CheckCircle className="mr-2 h-5 w-5" /> You're All Set!
+                        </>
+                        ) : registrations >= maxParticipants ? (
+                        'Class is Full'
+                        ) : (
+                        'Confirm Your Free Spot'
+                        )}
+                    </Button>
                 </div>
                )}
 
-               <Button 
-                className="w-full h-12 text-lg mt-4" 
-                onClick={handleRegister} 
-                disabled={isRegistered || isSubmitting || (registrations >= maxParticipants && !isRegistered)}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                ) : isRegistered ? (
-                  <>
-                    <CheckCircle className="mr-2 h-5 w-5" /> You're All Set!
-                  </>
-                ) : registrations >= maxParticipants ? (
-                  'Class is Full'
-                ) : (
-                  'Confirm Your Free Spot'
-                )}
-              </Button>
             </CardFooter>
           </Card>
         </main>
       </div>
   );
 }
+
+    
