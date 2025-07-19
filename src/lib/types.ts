@@ -28,6 +28,7 @@ export interface Post {
   authorName: string;
   authorPhotoURL: string;
   content: string;
+  contentBangla?: string;
   timestamp: Timestamp;
   likes: string[]; // Array of user UIDs
   comments: Comment[];

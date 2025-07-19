@@ -10,11 +10,12 @@ import Image from "next/image";
 
 interface CreatePostFormProps {
   user: User;
-  onAddPost: (content: string, file: File | null) => Promise<void>;
+  onAddPost: (content: string, contentBangla: string, file: File | null) => Promise<void>;
 }
 
 export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
   const [content, setContent] = useState("");
+  const [contentBangla, setContentBangla] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [fileType, setFileType] = useState<'image' | 'video' | null>(null);
@@ -51,9 +52,10 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
 
     setIsSubmitting(true);
     try {
-      await onAddPost(content, file);
+      await onAddPost(content, contentBangla, file);
       // Reset form on success
       setContent("");
+      setContentBangla("");
       handleRemoveFile();
     } catch (error) {
       // The parent component (`today/page.tsx`) is responsible for
@@ -76,13 +78,22 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
             <AvatarImage src={user.photoURL ?? `https://placehold.co/40x40/FF69B4/FFFFFF?text=${userInitial}`} alt={user.name ?? ""} />
             <AvatarFallback className="bg-secondary text-secondary-foreground">{userInitial}</AvatarFallback>
             </Avatar>
-            <Textarea
-            placeholder={`What's happening today, ${user.name}?`}
-            className="flex-1 p-3 rounded-lg bg-secondary border-border focus:outline-none focus:ring-2 focus:ring-primary text-secondary-foreground placeholder:text-muted-foreground text-sm min-h-[8rem]"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            disabled={isSubmitting}
-            />
+            <div className="flex-1 space-y-2">
+                <Textarea
+                    placeholder={`What's happening in English, ${user.name}?`}
+                    className="flex-1 p-3 rounded-lg bg-secondary border-border focus:outline-none focus:ring-2 focus:ring-primary text-secondary-foreground placeholder:text-muted-foreground text-sm min-h-[6rem]"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    disabled={isSubmitting}
+                />
+                 <Textarea
+                    placeholder={`বাংলায় কী ঘটছে?`}
+                    className="flex-1 p-3 rounded-lg bg-secondary border-border focus:outline-none focus:ring-2 focus:ring-primary text-secondary-foreground placeholder:text-muted-foreground text-sm min-h-[6rem]"
+                    value={contentBangla}
+                    onChange={(e) => setContentBangla(e.target.value)}
+                    disabled={isSubmitting}
+                />
+            </div>
         </div>
         
         {filePreview && (
@@ -119,7 +130,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
                     disabled={isSubmitting}
                 />
             </div>
-            <Button type="submit" disabled={isSubmitting || (!content.trim() && !file)}>
+            <Button type="submit" disabled={isSubmitting || (!content.trim() && !contentBangla.trim() && !file)}>
                 {isSubmitting ? "Posting..." : "Post"}
             </Button>
         </div>

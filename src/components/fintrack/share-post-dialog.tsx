@@ -23,6 +23,7 @@ interface SharePostDialogProps {
   currentUser: User | null;
   onSharePost: (
     content: string,
+    contentBangla: string,
     file: File | null,
     postType: 'original' | 'share',
     sharedPostId: string
@@ -44,7 +45,7 @@ export function SharePostDialog({
 
     setIsSubmitting(true);
     try {
-      await onSharePost(content, null, 'share', postToShare.id);
+      await onSharePost(content, '', null, 'share', postToShare.id);
       setContent('');
       onOpenChange(false);
     } catch (error) {

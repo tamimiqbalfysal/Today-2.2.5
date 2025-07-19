@@ -5,7 +5,7 @@ import type { Post, User, Comment } from "@/lib/types";
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Trash2, Share2, Star } from "lucide-react";
+import { Heart, MessageCircle, Trash2, Share2, Star, Dot } from "lucide-react";
 import Image from "next/image";
 import {
   AlertDialog,
@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Textarea } from "../ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { SharePostDialog } from "./share-post-dialog";
 import Link from "next/link";
 import { Skeleton } from "../ui/skeleton";
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 
 interface PostCardProps {
   post: Post;
@@ -37,6 +38,7 @@ interface PostCardProps {
   onComment?: (postId: string, commentText: string) => Promise<void>;
   onSharePost: (
     content: string,
+    contentBangla: string,
     file: File | null,
     postType: 'original' | 'share',
     sharedPostId: string
@@ -104,6 +106,16 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
     const [author, setAuthor] = useState<User | null>(null);
     const [isLoadingAuthor, setIsLoadingAuthor] = useState(true);
     const [hasLaughed, setHasLaughed] = useState(false);
+    const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+    const [currentSlide, setCurrentSlide] = useState(0);
+
+    useEffect(() => {
+        if (!carouselApi) return;
+        setCurrentSlide(carouselApi.selectedScrollSnap());
+        carouselApi.on("select", () => {
+            setCurrentSlide(carouselApi.selectedScrollSnap());
+        });
+    }, [carouselApi]);
     
     useEffect(() => {
         setPost(initialPost);
@@ -222,6 +234,8 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
         }
     };
 
+    const hasMultipleLanguages = post.content && post.contentBangla;
+
     return (
         <>
             <div 
@@ -253,8 +267,32 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                         {formatDistanceToNow(timestamp, { addSuffix: true })}
                     </p>
                 </div>
-                {post.content && <p className="font-sans text-card-foreground text-lg mb-4 whitespace-pre-wrap">{post.content}</p>}
-                
+                 
+                {post.content || post.contentBangla ? (
+                    <div className="mb-4">
+                        <Carousel setApi={setCarouselApi} className="w-full">
+                            <CarouselContent>
+                                {post.content && (
+                                    <CarouselItem>
+                                        <p className="font-sans text-card-foreground text-lg whitespace-pre-wrap">{post.content}</p>
+                                    </CarouselItem>
+                                )}
+                                {post.contentBangla && (
+                                    <CarouselItem>
+                                        <p className="font-sans text-card-foreground text-lg whitespace-pre-wrap">{post.contentBangla}</p>
+                                    </CarouselItem>
+                                )}
+                            </CarouselContent>
+                        </Carousel>
+                        {hasMultipleLanguages && (
+                            <div className="flex justify-center items-center mt-2 space-x-1">
+                                <Dot className={cn("h-6 w-6 cursor-pointer", currentSlide === 0 ? "text-primary" : "text-muted-foreground")} onClick={() => carouselApi?.scrollTo(0)} />
+                                <Dot className={cn("h-6 w-6 cursor-pointer", currentSlide === 1 ? "text-primary" : "text-muted-foreground")} onClick={() => carouselApi?.scrollTo(1)} />
+                            </div>
+                        )}
+                    </div>
+                ) : null}
+
                 {post.type === 'share' && post.sharedPost && (
                     <OriginalPostCard post={post.sharedPost} />
                 )}
@@ -422,6 +460,7 @@ interface PostFeedProps {
   onCommentPost: (postId: string, commentText: string) => Promise<void>;
   onSharePost: (
     content: string,
+    contentBangla: string,
     file: File | null,
     postType: 'original' | 'share',
     sharedPostId: string

@@ -228,6 +228,7 @@ export default function TodayPage() {
 
     const handleAddPost = async (
     content: string, 
+    contentBangla: string,
     file: File | null, 
     postType: 'original' | 'share' = 'original', 
     sharedPostId?: string
@@ -254,6 +255,7 @@ export default function TodayPage() {
           authorName: user.name,
           authorPhotoURL: user.photoURL || `https://placehold.co/40x40/FF69B4/FFFFFF?text=${user.name.charAt(0)}`,
           content: content,
+          contentBangla: contentBangla,
           timestamp: Timestamp.now(),
           likes: [],
           comments: [],
