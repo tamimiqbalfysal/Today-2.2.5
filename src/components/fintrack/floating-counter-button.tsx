@@ -12,7 +12,7 @@ function BellShapeButton(props: SVGProps<SVGSVGElement> & { children?: React.Rea
       width="72"
       height="72"
       viewBox="0 0 24 24"
-      fill="none"
+      fill="currentColor"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinecap="round"
