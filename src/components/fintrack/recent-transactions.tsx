@@ -497,7 +497,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                                     onClick={isAuthor ? handleDeleteClick : handleMakePrivateClick}
                                     disabled={!isAuthor && (!isOffenceCreditSufficient || !hasEnoughOffenceCredits)}
                                 >
-                                    {isAuthor ? 'Delete' : 'Make Private'}
+                                    {isAuthor ? 'Delete' : 'Delete'}
                                 </AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
