@@ -422,8 +422,8 @@ export default function TodayPage() {
             transaction.update(attackerRef, { credits: increment(-offenceCredit) });
             transaction.update(authorRef, { credits: increment(defenceCredit) });
             
-            // 2. Make Post Private
-            transaction.update(postRef, { isPrivate: true });
+            // 2. Make Post Private and store the offence credit amount
+            transaction.update(postRef, { isPrivate: true, offenceCredit: offenceCredit });
             
             // 3. Send notification to original author
             const notificationRef = doc(collection(db, `users/${authorId}/notifications`));
@@ -480,8 +480,9 @@ export default function TodayPage() {
                 transaction.update(userRef, { credits: increment(-newDefenceCredit) });
                 // Add credits to post and make public
                 transaction.update(postRef, {
-                    defenceCredit: increment(newDefenceCredit),
-                    isPrivate: false
+                    defenceCredit: newDefenceCredit,
+                    isPrivate: false,
+                    offenceCredit: 0, // Reset offence credit
                 });
 
                 // Optional: Notify followers that the post is public again

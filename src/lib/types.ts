@@ -45,6 +45,7 @@ export interface Post {
   averageRating?: number;
   defenceCredit?: number;
   isPrivate?: boolean;
+  offenceCredit?: number;
 }
 
 export interface Review {

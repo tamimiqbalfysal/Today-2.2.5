@@ -249,11 +249,14 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
     const hasMultipleSlides = hasEnglishContent && hasBanglaContent;
 
     const defenceCreditValue = post.defenceCredit || 0;
+    const lastOffenceCreditValue = post.offenceCredit || 0;
     const offenceCreditValue = parseInt(offenceCredit, 10) || 0;
     const newDefenceCreditValue = parseInt(newDefenceCredit, 10) || 0;
     const hasEnoughOffenceCredits = (currentUser?.credits || 0) >= offenceCreditValue;
     const hasEnoughNewDefenceCredits = (currentUser?.credits || 0) >= newDefenceCreditValue;
     const isOffenceCreditSufficient = offenceCreditValue > defenceCreditValue;
+    const isRepublishCreditSufficient = newDefenceCreditValue > lastOffenceCreditValue;
+
 
     const handleDeleteClick = () => {
         if (onDelete) {
@@ -285,7 +288,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                 <AlertDialogHeader>
                     <AlertDialogTitle>Make Post Public</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Increase your Defence Credits to make this post public again. Your current total credits: {currentUser?.credits ?? 0}.
+                        To make this post public again, you must use more than the {lastOffenceCreditValue} credits used to privatize it. Your current total credits: {currentUser?.credits ?? 0}.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="space-y-2">
@@ -293,7 +296,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                     <Input
                         id="new-defence-credit"
                         type="number"
-                        placeholder="e.g., 10"
+                        placeholder={`Enter more than ${lastOffenceCreditValue}`}
                         value={newDefenceCredit}
                         onChange={(e) => setNewDefenceCredit(e.target.value)}
                     />
@@ -303,12 +306,18 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                             You don't have enough credits.
                         </p>
                     )}
+                    {newDefenceCreditValue > 0 && !isRepublishCreditSufficient && (
+                        <p className="text-xs text-destructive flex items-center justify-start gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            Must be greater than {lastOffenceCreditValue}.
+                        </p>
+                    )}
                 </div>
                 <AlertDialogFooter>
                     <Button variant="destructive" onClick={handleDeleteClick}>Delete Permanently</Button>
                     <AlertDialogAction
                         onClick={handleMakePublicClick}
-                        disabled={!newDefenceCreditValue || !hasEnoughNewDefenceCredits}
+                        disabled={!isRepublishCreditSufficient || !hasEnoughNewDefenceCredits}
                     >
                         Publish Again
                     </AlertDialogAction>
