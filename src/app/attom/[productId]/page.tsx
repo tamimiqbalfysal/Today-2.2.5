@@ -77,6 +77,8 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!productId || !db) return;
 
+    let unsubscribeReviews: () => void = () => {};
+
     const fetchProductAndReviews = async () => {
       setIsLoading(true);
       try {
@@ -97,12 +99,21 @@ export default function ProductDetailPage() {
           
           const reviewsRef = collection(db, 'posts', productId, 'reviews');
           const q = query(reviewsRef, orderBy('timestamp', 'desc'));
-          const unsubscribeReviews = onSnapshot(q, (snapshot) => {
+          unsubscribeReviews = onSnapshot(q, (snapshot) => {
               const fetchedReviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
               setReviews(fetchedReviews);
+          }, (error) => {
+              console.error("Error fetching reviews:", error);
+              if (error.code === 'permission-denied') {
+                  toast({
+                      variant: 'destructive',
+                      title: 'Permission Error',
+                      description: 'Could not load reviews. Your security rules must allow reads on the reviews subcollection.',
+                      duration: 10000,
+                  });
+              }
           });
           
-          // You might want to store and call this unsubscribe function on component unmount
         } else {
           toast({ variant: 'destructive', title: 'Product not found.' });
           setProduct(null);
@@ -116,6 +127,10 @@ export default function ProductDetailPage() {
     };
 
     fetchProductAndReviews();
+    
+    return () => {
+        unsubscribeReviews();
+    };
   }, [productId, toast]);
   
   const price = useMemo(() => {
