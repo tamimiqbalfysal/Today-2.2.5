@@ -439,7 +439,7 @@ export default function TodayPage() {
             transaction.update(authorRef, { unreadNotifications: true });
         });
         
-        toast({ title: 'Success!', description: `Post has been made private.` });
+        toast({ title: 'Success!', description: 'The post has been deleted.' });
 
       } catch (error: any) {
         console.error("Error during offence action:", error);
