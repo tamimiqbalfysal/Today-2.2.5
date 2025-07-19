@@ -566,7 +566,7 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                       onClick={handleIncreaseClick}
                       disabled={!currentUser || isAuthor}
                     >
-                        <span className="font-semibold">{hasFollowed ? 'Following' : 'Follow'}</span>
+                        <span className="font-semibold">{hasFollowed ? 'Saved' : 'Save'}</span>
                          {author?.followers && author.followers.length > 0 && (
                             <span className="ml-2 font-semibold">{author.followers.length}</span>
                         )}
