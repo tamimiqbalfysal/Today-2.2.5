@@ -185,9 +185,13 @@ export default function TribePage() {
             });
         }
         toast({ title: 'Success', description: 'Product deleted successfully.' });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error deleting product:", error);
-        toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the product. Please ensure your Firestore security rules allow this action.' });
+        let description = 'Could not delete the product. Please try again.';
+        if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+            description = "Permission Denied. Please update your Firestore security rules to allow this action.";
+        }
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: description, duration: 10000 });
     }
   };
 
