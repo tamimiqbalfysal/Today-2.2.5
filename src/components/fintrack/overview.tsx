@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "@/lib/types";
-import { MapPin } from "lucide-react";
+import { MapPin, Users } from "lucide-react";
 
 interface ProfileCardProps {
   user: User;
@@ -9,9 +9,10 @@ interface ProfileCardProps {
 
 export function ProfileCard({ user }: ProfileCardProps) {
   const followersCount = user.followers?.length ?? 0;
+  const followingCount = user.following?.length ?? 0;
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader className="items-center text-center p-6">
         <Avatar className="h-24 w-24 mb-4 border-4 border-primary/50 shadow-lg">
             <AvatarImage src={user.photoURL ?? undefined} alt={user.name ?? "user"} />
@@ -28,10 +29,14 @@ export function ProfileCard({ user }: ProfileCardProps) {
         )}
       </CardHeader>
       <CardContent>
-        <div className="flex justify-center text-center text-sm text-muted-foreground">
+        <div className="flex justify-around text-center text-sm text-muted-foreground border-t pt-4">
             <div className="space-y-1">
                 <p className="font-bold text-lg text-foreground">{followersCount}</p>
                 <p>Followers</p>
+            </div>
+            <div className="space-y-1">
+                <p className="font-bold text-lg text-foreground">{followingCount}</p>
+                <p>Following</p>
             </div>
         </div>
       </CardContent>
