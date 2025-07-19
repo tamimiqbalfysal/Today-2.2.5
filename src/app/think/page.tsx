@@ -85,16 +85,26 @@ export default function ThinkPage() {
     }
     
     if (checkEmail) {
-        const q = query(collection(db, "think_free_class_registrations"), where("email", "==", checkEmail));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-            setIsRegistered(true);
+        try {
+            const q = query(collection(db, "think_free_class_registrations"), where("email", "==", checkEmail));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                setIsRegistered(true);
+            } else {
+                setIsRegistered(false);
+            }
+        } catch (error) {
+            console.error("Failed to check registration", error);
+            setIsRegistered(false);
         }
+    } else {
+        setIsRegistered(false);
     }
   }, [user]);
   
   useEffect(() => {
     if (authLoading) return;
+    
     setIsLoading(true);
 
     const courseDocRef = doc(db, 'courseAdmin', 'think');
@@ -109,6 +119,8 @@ export default function ThinkPage() {
     const registrationsColRef = collection(db, 'think_free_class_registrations');
     const unsubscribeRegistrations = onSnapshot(registrationsColRef, (snapshot) => {
       setRegistrations(snapshot.size);
+    }, (error) => {
+        console.error("Error fetching registrations count:", error);
     });
     
     checkRegistration().finally(() => setIsLoading(false));
@@ -158,7 +170,7 @@ export default function ThinkPage() {
       
       toast({ title: 'Registration Successful!', description: "You've confirmed your free spot. We'll be in touch!" });
       setIsRegistered(true);
-       if (typeof window !== 'undefined') {
+       if (typeof window !== 'undefined' && !user) {
           localStorage.setItem('thinkCourseEmail', email.trim());
       }
 
@@ -269,5 +281,3 @@ export default function ThinkPage() {
       </div>
   );
 }
-
-    
