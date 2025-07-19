@@ -6,7 +6,7 @@ import type { Post, User, Comment } from "@/lib/types";
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Trash2, Share2, Star, Dot, Shield, AlertTriangle } from "lucide-react";
+import { Heart, MessageCircle, Trash2, Share2, Star, Dot, Shield, AlertTriangle, Lock } from "lucide-react";
 import Image from "next/image";
 import {
   AlertDialog,
@@ -274,9 +274,14 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                           </Avatar>
                         </Link>
                         <div>
-                            <Link href={profileLink}>
-                                <p className="font-semibold text-lg text-orange-500 hover:underline">{post.authorName || 'Anonymous'}</p>
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                <Link href={profileLink}>
+                                    <p className="font-semibold text-lg text-orange-500 hover:underline">{post.authorName || 'Anonymous'}</p>
+                                </Link>
+                                {post.isPrivate && (
+                                    <Lock className="h-4 w-4 text-muted-foreground" title="This post is private" />
+                                )}
+                            </div>
                             {isLoadingAuthor ? (
                                 <Skeleton className="h-4 w-24 mt-1" />
                             ) : (
@@ -390,12 +395,12 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription asChild>
                                     <div className="space-y-4">
-                                        <p>
+                                        <div>
                                           {isAuthor 
                                             ? "This action cannot be undone. This will permanently delete this post." 
                                             : "This action will make this post private, so only the author can see it."}
-                                        </p>
-                                        {(defenceCreditValue) > 0 && (
+                                        </div>
+                                        {defenceCreditValue > 0 && (
                                             <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-md">
                                                 <div className="text-sm text-yellow-900 dark:text-yellow-200 flex items-center gap-2">
                                                     <Shield className="h-4 w-4" />
