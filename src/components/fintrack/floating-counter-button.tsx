@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -63,9 +64,9 @@ export function FloatingCounterButton() {
 
   return (
     <SheetTrigger asChild>
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+      <div className="fixed bottom-4 right-4 z-50">
         <div 
-            className="relative flex items-center justify-center cursor-pointer text-secondary-foreground"
+            className="relative flex items-center justify-center cursor-pointer"
             aria-label={`You have ${credits} credits and notifications`}
         >
             <BellShapeButton className="h-20 w-20 text-white drop-shadow-lg" />
