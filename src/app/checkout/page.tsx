@@ -124,9 +124,12 @@ export default function CheckoutPage() {
                       <p>${cartTotal.toFixed(2)}</p>
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="flex-col gap-2">
                     <Button className="w-full" onClick={handleProceedToPayment}>
                       Proceed to Payment
+                    </Button>
+                    <Button asChild variant="outline" className="w-full">
+                      <Link href="/attom">Shop More</Link>
                     </Button>
                   </CardFooter>
                 </Card>
