@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { collection, query, orderBy, onSnapshot, Timestamp, doc, updateDoc, increment, runTransaction, getDoc, writeBatch, arrayUnion, arrayRemove, addDoc, collectionGroup, setDoc, where, getDocs, deleteDoc } from "firebase/firestore";
 import { db, storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { useAuth } from '@/contexts/auth-context';
 import type { Post } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
@@ -342,6 +342,127 @@ export default function TodayPage() {
           throw error;
       }
     };
+
+    const handleDeletePost = async (postId: string, mediaUrl?: string) => {
+      if (!db || !storage || !user) return;
+      try {
+        await runTransaction(db, async (transaction) => {
+          const postRef = doc(db, 'posts', postId);
+          const postDoc = await transaction.get(postRef);
+
+          if (!postDoc.exists()) {
+              throw new Error("Post does not exist!");
+          }
+          
+          const postData = postDoc.data() as Post;
+          if (postData.authorId !== user.uid) {
+            throw new Error("You can only delete your own posts.");
+          }
+
+          if (postData.defenceCredit && postData.defenceCredit > 0) {
+              const userRef = doc(db, 'users', user.uid);
+              transaction.update(userRef, { credits: increment(postData.defenceCredit) });
+          }
+          
+          transaction.delete(postRef);
+        });
+
+        if (mediaUrl) {
+            const storageRef = ref(storage, mediaUrl);
+            await deleteObject(storageRef).catch(err => {
+                if (err.code !== 'storage/object-not-found') throw err;
+            });
+        }
+        toast({ title: 'Success', description: 'Post deleted successfully.' });
+      } catch (error: any) {
+          console.error("Error deleting post:", error);
+          toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message || 'Could not delete post.' });
+      }
+    };
+    
+    const handleOffenceDelete = async (post: Post, offenceCredit: number) => {
+      if (!db || !storage || !user) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+        return;
+      }
+      
+      const attackerId = user.uid;
+      const authorId = post.authorId;
+      const defenceCredit = post.defenceCredit || 0;
+
+      if (attackerId === authorId) {
+        toast({ variant: 'destructive', title: 'Error', description: "You cannot use offence credits on your own post." });
+        return;
+      }
+      if (offenceCredit <= defenceCredit) {
+        toast({ variant: 'destructive', title: 'Failed', description: `Offence credit must be greater than ${defenceCredit}.` });
+        return;
+      }
+
+      try {
+        await runTransaction(db, async (transaction) => {
+            const attackerRef = doc(db, 'users', attackerId);
+            const authorRef = doc(db, 'users', authorId);
+            const postRef = doc(db, 'posts', post.id);
+
+            const [attackerDoc, authorDoc, postDoc] = await Promise.all([
+                transaction.get(attackerRef),
+                transaction.get(authorRef),
+                transaction.get(postRef)
+            ]);
+            
+            if (!attackerDoc.exists() || !authorDoc.exists() || !postDoc.exists()) {
+                throw new Error("Required data not found. Could not complete the action.");
+            }
+
+            const attackerCredits = attackerDoc.data().credits || 0;
+            if (attackerCredits < offenceCredit) {
+                throw new Error("You do not have enough credits for this offence.");
+            }
+            
+            // 1. Update credits
+            transaction.update(attackerRef, { credits: increment(-offenceCredit) });
+            transaction.update(authorRef, { credits: increment(defenceCredit) });
+            
+            // 2. Delete Post
+            transaction.delete(postRef);
+            
+            // 3. Send notification to original author
+            const notificationRef = doc(collection(db, `users/${authorId}/notifications`));
+            transaction.set(notificationRef, {
+                type: 'postDeleted',
+                senderId: attackerId,
+                senderName: user.name,
+                senderPhotoURL: user.photoURL || '',
+                postId: post.id,
+                timestamp: Timestamp.now(),
+                read: false,
+            });
+            transaction.update(authorRef, { unreadNotifications: true });
+        });
+
+        // 4. Delete media from storage (outside transaction)
+        if (post.mediaURL) {
+            const mediaRef = ref(storage, post.mediaURL);
+            await deleteObject(mediaRef).catch(err => {
+                if (err.code !== 'storage/object-not-found') console.warn("Failed to delete media file:", err);
+            });
+        }
+        if (post.mediaURLBangla) {
+            const mediaRefBangla = ref(storage, post.mediaURLBangla);
+            await deleteObject(mediaRefBangla).catch(err => {
+                if (err.code !== 'storage/object-not-found') console.warn("Failed to delete bangla media file:", err);
+            });
+        }
+        
+        toast({ title: 'Success!', description: `Post deleted successfully.` });
+
+      } catch (error: any) {
+        console.error("Error during offence delete:", error);
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message || 'An unexpected error occurred.' });
+      }
+    };
+
   
   if (authLoading || (isDataLoading && user)) {
     return <TodaySkeleton />;
@@ -360,7 +481,8 @@ export default function TodayPage() {
                 <PostFeed 
                 posts={posts} 
                 currentUser={user}
-                onDeletePost={() => {}}
+                onDeletePost={handleDeletePost}
+                onOffenceDelete={handleOffenceDelete}
                 onLikePost={handleLikePost}
                 onCommentPost={handleCommentPost}
                 onSharePost={handleAddPost}

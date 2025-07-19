@@ -67,7 +67,7 @@ export interface Comment {
 
 export interface Notification {
   id: string;
-  type: 'like';
+  type: 'like' | 'postDeleted';
   senderId: string;
   senderName: string;
   senderPhotoURL: string;

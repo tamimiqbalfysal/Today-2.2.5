@@ -5,7 +5,7 @@ import type { Post, User, Comment } from "@/lib/types";
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Trash2, Share2, Star, Dot, Shield } from "lucide-react";
+import { Heart, MessageCircle, Trash2, Share2, Star, Dot, Shield, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import {
   AlertDialog,
@@ -29,11 +29,14 @@ import { SharePostDialog } from "./share-post-dialog";
 import Link from "next/link";
 import { Skeleton } from "../ui/skeleton";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 
 interface PostCardProps {
   post: Post;
   currentUser?: User | null;
   onDelete?: (postId: string, mediaUrl?: string) => void;
+  onOffenceDelete?: (post: Post, offenceCredit: number) => void;
   onLike?: (postId: string, authorId: string) => void;
   onComment?: (postId: string, commentText: string) => Promise<void>;
   onSharePost: (
@@ -103,13 +106,15 @@ function OriginalPostCard({ post }: { post: Post }) {
 }
 
 
-function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment, onSharePost }: PostCardProps) {
+function PostCard({ post: initialPost, currentUser, onDelete, onOffenceDelete, onLike, onComment, onSharePost }: PostCardProps) {
     const [post, setPost] = useState(initialPost);
     const [author, setAuthor] = useState<User | null>(null);
     const [isLoadingAuthor, setIsLoadingAuthor] = useState(true);
     const [hasLaughed, setHasLaughed] = useState(false);
     const [carouselApi, setCarouselApi] = useState<CarouselApi>();
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [offenceCredit, setOffenceCredit] = useState('');
+
 
     useEffect(() => {
         if (!carouselApi) return;
@@ -240,6 +245,19 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
     const hasBanglaContent = post.contentBangla || post.mediaURLBangla;
     const hasMultipleSlides = hasEnglishContent && hasBanglaContent;
 
+    const defenceCreditValue = post.defenceCredit || 0;
+    const offenceCreditValue = parseInt(offenceCredit, 10) || 0;
+    const hasEnoughOffenceCredits = (currentUser?.credits || 0) >= offenceCreditValue;
+    const isOffenceCreditSufficient = offenceCreditValue > defenceCreditValue;
+
+    const handleDeleteClick = () => {
+        if (isAuthor && onDelete) {
+            onDelete(post.id, post.mediaURL);
+        } else if (!isAuthor && onOffenceDelete) {
+            onOffenceDelete(post, offenceCreditValue);
+        }
+    };
+
     return (
         <>
             <div 
@@ -359,43 +377,61 @@ function PostCard({ post: initialPost, currentUser, onDelete, onLike, onComment,
                         <Button variant="ghost" size="icon">
                             <Star className="h-6 w-6" />
                         </Button>
-                        {onDelete && (
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                        <Trash2 className="h-6 w-6" />
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription asChild>
-                                        <div>
-                                            <p>This action cannot be undone. This will permanently delete this post.</p>
-                                            {(post.defenceCredit ?? 0) > 0 && (
-                                                <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-md">
-                                                    <div className="text-sm text-yellow-900 dark:text-yellow-200 flex items-center gap-2">
-                                                        <Shield className="h-4 w-4" />
-                                                         This post has a Defence Credit of <span className="font-bold">{post.defenceCredit}</span>.
-                                                    </div>
+                        
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Trash2 className="h-6 w-6" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription asChild>
+                                    <div className="space-y-4">
+                                        <p>This action cannot be undone. This will permanently delete this post.</p>
+                                        {(defenceCreditValue) > 0 && (
+                                            <div className="p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-md">
+                                                <div className="text-sm text-yellow-900 dark:text-yellow-200 flex items-center gap-2">
+                                                    <Shield className="h-4 w-4" />
+                                                     This post has a Defence Credit of <span className="font-bold">{defenceCreditValue}</span>.
                                                 </div>
-                                            )}
-                                        </div>
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        onClick={() => onDelete(post.id, post.mediaURL)}
-                                        disabled={!isAuthor}
-                                    >
-                                        Delete
-                                    </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        )}
+                                            </div>
+                                        )}
+                                        {!isAuthor && (
+                                            <div className="space-y-2">
+                                                <Label htmlFor="offence-credit">Offence Credit</Label>
+                                                <Input 
+                                                    id="offence-credit"
+                                                    type="number"
+                                                    placeholder={`Enter more than ${defenceCreditValue}`}
+                                                    value={offenceCredit}
+                                                    onChange={(e) => setOffenceCredit(e.target.value)}
+                                                />
+                                                {!hasEnoughOffenceCredits && offenceCreditValue > 0 && (
+                                                    <p className="text-xs text-destructive flex items-center justify-start gap-1">
+                                                        <AlertTriangle className="h-3 w-3" />
+                                                        You don't have enough credits.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    onClick={handleDeleteClick}
+                                    disabled={!isAuthor && (!isOffenceCreditSufficient || !hasEnoughOffenceCredits)}
+                                >
+                                    Delete
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+
                     </div>
                 </div>
 
@@ -477,6 +513,7 @@ interface PostFeedProps {
   posts: Post[];
   currentUser?: User | null;
   onDeletePost: (postId: string, mediaUrl?: string) => void;
+  onOffenceDelete: (post: Post, offenceCredit: number) => void;
   onLikePost: (postId: string, authorId: string) => void;
   onCommentPost: (postId: string, commentText: string) => Promise<void>;
   onSharePost: (
@@ -490,7 +527,7 @@ interface PostFeedProps {
   ) => Promise<void>;
 }
 
-export function PostFeed({ posts, currentUser, onDeletePost, onLikePost, onCommentPost, onSharePost }: PostFeedProps) {
+export function PostFeed({ posts, currentUser, onDeletePost, onOffenceDelete, onLikePost, onCommentPost, onSharePost }: PostFeedProps) {
   if (!posts || posts.length === 0) {
     return (
       <div className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg">
@@ -520,6 +557,7 @@ export function PostFeed({ posts, currentUser, onDeletePost, onLikePost, onComme
                 post={post} 
                 currentUser={currentUser} 
                 onDelete={onDeletePost}
+                onOffenceDelete={onOffenceDelete}
                 onLike={onLikePost} 
                 onComment={onCommentPost}
                 onSharePost={onSharePost}
