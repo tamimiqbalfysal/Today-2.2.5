@@ -69,7 +69,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() && !file && !contentBangla.trim() && !fileBangla) return;
+    if (!content.trim() && !file) return;
 
     setIsSubmitting(true);
     try {
@@ -86,6 +86,10 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
   };
 
   const userInitial = user.name ? user.name.charAt(0) : "🥳";
+  
+  const hasEnglishContent = content.trim() !== '' || file !== null;
+  const hasBanglaContent = contentBangla.trim() !== '' || fileBangla !== null;
+  const isPostButtonDisabled = isSubmitting || !hasEnglishContent;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -164,7 +168,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
       </div>
         
       <div className="flex justify-end items-center">
-        <Button type="submit" disabled={isSubmitting || (!content.trim() && !contentBangla.trim() && !file && !fileBangla)}>
+        <Button type="submit" disabled={isPostButtonDisabled}>
           {isSubmitting ? "Posting..." : "Post"}
         </Button>
       </div>
