@@ -229,24 +229,26 @@ export default function ProductDetailPage() {
     }
     setIsSubmittingReview(true);
     try {
-        const reviewRef = collection(db, 'posts', product.id, 'reviews');
-        await addDoc(reviewRef, {
-            authorId: currentUser.uid,
-            authorName: currentUser.name,
-            authorPhotoURL: currentUser.photoURL || '',
-            rating: rating,
-            comment: reviewComment,
-            timestamp: Timestamp.now()
-        });
-        
         const productRef = doc(db, 'posts', product.id);
+        const newReviewRef = doc(collection(db, 'posts', product.id, 'reviews'));
+
         await runTransaction(db, async (transaction) => {
             const productDoc = await transaction.get(productRef);
             if (!productDoc.exists()) throw "Product does not exist!";
             
+            // Create the new review document
+            transaction.set(newReviewRef, {
+                authorId: currentUser.uid,
+                authorName: currentUser.name,
+                authorPhotoURL: currentUser.photoURL || '',
+                rating: rating,
+                comment: reviewComment,
+                timestamp: Timestamp.now()
+            });
+
+            // Update the product's aggregate review data
             const currentReviewCount = productDoc.data().reviewCount || 0;
             const currentAverageRating = productDoc.data().averageRating || 0;
-            
             const newReviewCount = currentReviewCount + 1;
             const newAverageRating = ((currentAverageRating * currentReviewCount) + rating) / newReviewCount;
             
@@ -256,11 +258,17 @@ export default function ProductDetailPage() {
             });
         });
         
-        setProduct(prev => prev ? { 
-            ...prev, 
-            reviewCount: (prev.reviewCount || 0) + 1, 
-            averageRating: (((prev.averageRating || 0) * (prev.reviewCount || 0)) + rating) / ((prev.reviewCount || 0) + 1)
-        } : null);
+        // Optimistically update local state for instant feedback
+        setProduct(prev => {
+            if (!prev) return null;
+            const newReviewCount = (prev.reviewCount || 0) + 1;
+            const newAverageRating = (((prev.averageRating || 0) * (prev.reviewCount || 0)) + rating) / newReviewCount;
+            return { 
+                ...prev, 
+                reviewCount: newReviewCount,
+                averageRating: newAverageRating
+            };
+        });
 
         toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
         setRating(0);
@@ -473,3 +481,5 @@ export default function ProductDetailPage() {
     </div>
   );
 }
+
+    
