@@ -21,6 +21,7 @@ const apps: DrawerApp[] = [
   { id: 'mingle', name: 'Mingle', logo: '/mingle-logo.png', href: '#' },
   { id: 'thankug', name: 'Thanku G', logo: '/thankug-logo.png', href: '/thank-you' },
   { id: 'attom', name: 'Attom', logo: 'https://placehold.co/48x48/9ca3af/FFFFFF?text=A', href: '/attom' },
+  { id: 'bitt', name: 'Bitt', logo: 'https://placehold.co/48x48/fde047/000000?text=B', href: '/bitt' },
 ];
 
 const moreApps: DrawerApp[] = [
