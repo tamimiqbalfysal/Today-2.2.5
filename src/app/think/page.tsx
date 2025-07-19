@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { AuthGuard } from '@/components/auth/auth-guard';
 import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -11,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Users, Calendar, Video, CheckCircle, Loader2, User as UserIcon, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, collection } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import type { ThinkCourse } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -77,10 +76,27 @@ export default function ThinkPage() {
   }, [user]);
 
   const checkRegistration = useCallback(async () => {
-    if (!user || !db) return;
-    const registrationRef = doc(db, 'think_registrations', user.uid);
-    const docSnap = await getDoc(registrationRef);
-    setIsRegistered(docSnap.exists());
+    if (!db) return;
+    
+    // For logged-in users, check their UID
+    if (user) {
+        const registrationRef = doc(db, 'think_registrations', user.uid);
+        const docSnap = await getDoc(registrationRef);
+        if (docSnap.exists()) {
+            setIsRegistered(true);
+            return;
+        }
+    }
+    
+    // For guests, check local storage
+    const localEmail = localStorage.getItem('thinkCourseEmail');
+    if (localEmail) {
+        const q = query(collection(db, "think_free_class_registrations"), where("email", "==", localEmail));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            setIsRegistered(true);
+        }
+    }
   }, [user]);
   
   useEffect(() => {
@@ -95,8 +111,8 @@ export default function ThinkPage() {
     }, (error) => {
       console.error("Error fetching course data:", error);
     });
-
-    const registrationsColRef = collection(db, 'think_registrations');
+    
+    const registrationsColRef = collection(db, 'think_free_class_registrations');
     const unsubscribeRegistrations = onSnapshot(registrationsColRef, (snapshot) => {
       setRegistrations(snapshot.size);
     });
@@ -110,9 +126,9 @@ export default function ThinkPage() {
   }, [authLoading, checkRegistration]);
 
   const handleRegister = async () => {
-    if (!user || !db) {
-      toast({ variant: 'destructive', title: 'You must be logged in to register.' });
-      return;
+    if (!db) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
+        return;
     }
     if (!name.trim() || !email.trim()) {
       toast({ variant: 'destructive', title: 'Missing Information', description: 'Please enter your name and email.' });
@@ -125,22 +141,38 @@ export default function ThinkPage() {
         toast({ variant: 'destructive', title: 'Registration Full', description: 'The course has reached its maximum number of participants.' });
         return;
       }
+      
+      const registrationsCollection = collection(db, 'think_free_class_registrations');
+      const q = query(registrationsCollection, where("email", "==", email.trim()));
+      const querySnapshot = await getDocs(q);
 
-      const registrationRef = doc(db, 'think_registrations', user.uid);
-      await setDoc(registrationRef, {
-        email: email,
-        name: name,
+      if (!querySnapshot.empty) {
+        toast({ variant: 'destructive', title: 'Already Registered', description: 'This email address has already been used to register for the course.' });
+        setIsRegistered(true);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('thinkCourseEmail', email.trim());
+        }
+        return;
+      }
+
+      await addDoc(registrationsCollection, {
+        email: email.trim(),
+        name: name.trim(),
         registeredAt: new Date(),
+        userId: user?.uid || null, // Store user ID if they are logged in
       });
       
-      toast({ title: 'Registration Successful!', description: "You've confirmed your attendance. We'll notify you when the date is announced." });
+      toast({ title: 'Registration Successful!', description: "You've confirmed your free spot. We'll be in touch!" });
       setIsRegistered(true);
+       if (typeof window !== 'undefined') {
+          localStorage.setItem('thinkCourseEmail', email.trim());
+      }
 
     } catch (error: any) {
       console.error("Error registering:", error);
-      let description = "An unexpected error occurred.";
+      let description = "An unexpected error occurred. You may need to update your Firestore security rules to allow writes to the 'think_free_class_registrations' collection.";
       if (error.code === 'permission-denied') {
-        description = "Permission denied. Please check your Firestore security rules to allow writes to the 'think_registrations' collection.";
+        description = "Permission denied. Please check your Firestore security rules.";
       }
       toast({ variant: 'destructive', title: 'Registration Failed', description });
     } finally {
@@ -155,7 +187,6 @@ export default function ThinkPage() {
   const progress = (registrations / maxParticipants) * 100;
 
   return (
-    <AuthGuard>
       <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
         <Header />
         <main className="flex-1 flex items-center justify-center p-4">
@@ -230,7 +261,7 @@ export default function ThinkPage() {
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 ) : isRegistered ? (
                   <>
-                    <CheckCircle className="mr-2 h-5 w-5" /> You are registered!
+                    <CheckCircle className="mr-2 h-5 w-5" /> You're All Set!
                   </>
                 ) : registrations >= maxParticipants ? (
                   'Class is Full'
@@ -242,6 +273,5 @@ export default function ThinkPage() {
           </Card>
         </main>
       </div>
-    </AuthGuard>
   );
 }
