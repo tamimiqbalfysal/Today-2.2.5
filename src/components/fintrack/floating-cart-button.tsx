@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export function FloatingCartButton() {
   const { cartCount } = useCart();
@@ -14,14 +15,19 @@ export function FloatingCartButton() {
   // Pages where the cart button should be visible
   const visiblePages = ['/attom', '/checkout', '/gift-garden', '/orgrim', '/secondsell', '/marco-polo', '/printit', '/machinehood', '/tribe'];
 
-  if (!visiblePages.includes(pathname)) {
+  // Do not show the button on pages not in the list, or on the checkout page if the cart is empty
+  if (!visiblePages.includes(pathname) || (pathname === '/checkout' && cartCount === 0)) {
     return null;
   }
 
   return (
     <Button 
       asChild
-      className="fixed bottom-28 right-4 z-50 h-16 w-16 rounded-full shadow-lg"
+      variant="outline"
+      className={cn(
+        "fixed bottom-28 right-4 z-50 h-16 w-16 rounded-full shadow-lg text-foreground",
+        "bg-background hover:bg-accent"
+      )}
       aria-label={`View cart with ${cartCount} items`}
     >
       <Link href="/checkout">
