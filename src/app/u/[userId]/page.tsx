@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -115,10 +116,11 @@ export default function UserProfilePage() {
 
     const currentUserRef = doc(db, "users", currentUser.uid);
     const targetUserRef = doc(db, "users", userProfile.uid);
+    const wasFollowing = isFollowing;
 
     try {
         await runTransaction(db, async (transaction) => {
-            if (isFollowing) {
+            if (wasFollowing) {
                 // Unfollow
                 transaction.update(currentUserRef, { following: arrayRemove(userProfile.uid) });
                 transaction.update(targetUserRef, { followers: arrayRemove(currentUser.uid) });
@@ -128,16 +130,25 @@ export default function UserProfilePage() {
                 transaction.update(targetUserRef, { followers: arrayUnion(currentUser.uid) });
             }
         });
-        toast({
-            title: isFollowing ? "Unfollowed" : "Followed",
-            description: `You are no longer following ${userProfile.name}.`
-        })
+        
+        // Use the status *before* the transaction to determine the correct message
+        if (wasFollowing) {
+            toast({
+                title: "Unfollowed",
+                description: `You are no longer following ${userProfile.name}.`
+            });
+        } else {
+            toast({
+                title: "Followed",
+                description: `You are now following ${userProfile.name}.`
+            });
+        }
     } catch (error) {
         console.error("Error toggling follow:", error);
         toast({
             variant: "destructive",
             title: "Error",
-            description: `Could not ${isFollowing ? 'unfollow' : 'follow'} the user.`
+            description: `Could not ${wasFollowing ? 'unfollow' : 'follow'} the user.`
         });
     }
   };
