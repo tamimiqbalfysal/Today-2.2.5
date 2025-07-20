@@ -208,7 +208,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
         <div className="flex justify-between items-center pt-4">
           <div className="flex items-center gap-4">
              <div className="flex items-center gap-2">
-                <Label htmlFor="local-color" className="text-sm text-muted-foreground">Local</Label>
+                <Label htmlFor="local-color" className="text-sm text-muted-foreground">Language</Label>
                  <input 
                     type="color" 
                     id="local-color"
@@ -216,7 +216,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
                     onChange={(e) => setLocalColor(e.target.value)}
                     className="w-8 h-8 p-0 border-none cursor-pointer rounded-md bg-transparent"
                     disabled={isSubmitting}
-                    title="Local Content Color"
+                    title="Language Content Color"
                  />
              </div>
           </div>
