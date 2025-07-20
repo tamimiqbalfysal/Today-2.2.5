@@ -198,15 +198,11 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
     };
     
     const handleSaveClick = () => {
-      // If user has already followed, this button only expands/collapses
-      if (hasSaved) {
         setIsExpanded(prev => !prev);
-      } else {
-        // If not followed, following also expands the view
-        if (!currentUser || !onLike) return;
-        onLike(post.id, post.authorId);
-        setIsExpanded(true);
-      }
+        if (!hasSaved) {
+            if (!currentUser || !onLike) return;
+            onLike(post.id, post.authorId);
+        }
     };
 
     const handleCommentPost = async () => {
@@ -526,23 +522,10 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
 
                                 </div>
                             </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-                
-                <div className="flex flex-col items-center justify-center pt-3 mt-3 border-t border-border">
-                    <AnimatePresence>
-                        {isExpanded && (
-                             <motion.div
-                                key="comment-down"
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0, transition: { duration: 0.2 } }}
-                                transition={{ duration: 0.3, ease: "easeOut" }}
-                                className="w-full mb-4 overflow-hidden"
-                            >
+                           
+                            <div className="w-full mt-4 space-y-4">
                                {post.comments && post.comments.length > 0 && (
-                                    <div className="space-y-4 my-4">
+                                    <div className="space-y-4">
                                         {post.comments.map((comment) => (
                                             <CommentItem key={comment.id} comment={comment} />
                                         ))}
@@ -570,10 +553,12 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                                         </Button>
                                     </div>
                                )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                    
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                
+                <div className="flex flex-col items-center justify-center pt-3 mt-3 border-t border-border">
                     <Button 
                       variant={hasSaved ? "default" : "outline"}
                       className={cn(
@@ -589,7 +574,6 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                             <span className="ml-2 font-semibold">{post.likes.length}</span>
                         )}
                     </Button>
-
                 </div>
             </div>
             <SharePostDialog 
