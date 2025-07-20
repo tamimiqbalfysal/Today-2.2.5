@@ -193,7 +193,7 @@ export default function ProfilePage() {
         <div className="flex flex-col h-screen">
           <main className="container mx-auto max-w-2xl p-4 flex-1 overflow-y-auto">
              <div className="w-full max-w-sm mx-auto">
-                <ProfileCard user={user!} />
+                <ProfileCard user={user!} isOwnProfile={true} />
              </div>
 
             <div className="mt-8 space-y-6">

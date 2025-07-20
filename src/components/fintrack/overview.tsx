@@ -1,13 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "@/lib/types";
-import { MapPin, Users } from "lucide-react";
+import { MapPin, Users, UserPlus, UserMinus } from "lucide-react";
+import { Button } from "../ui/button";
 
 interface ProfileCardProps {
   user: User;
+  isOwnProfile?: boolean;
+  isFollowing?: boolean;
+  onFollowToggle?: () => void;
 }
 
-export function ProfileCard({ user }: ProfileCardProps) {
+export function ProfileCard({ user, isOwnProfile = false, isFollowing, onFollowToggle }: ProfileCardProps) {
   const followersCount = user.followers?.length ?? 0;
   const followingCount = user.following?.length ?? 0;
 
@@ -40,6 +44,23 @@ export function ProfileCard({ user }: ProfileCardProps) {
             </div>
         </div>
       </CardContent>
+      {!isOwnProfile && onFollowToggle && (
+        <CardFooter>
+            <Button className="w-full" onClick={onFollowToggle} variant={isFollowing ? "destructive" : "default"}>
+                {isFollowing ? (
+                    <>
+                        <UserMinus className="mr-2 h-4 w-4" />
+                        Unfollow
+                    </>
+                ) : (
+                    <>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Follow
+                    </>
+                )}
+            </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }

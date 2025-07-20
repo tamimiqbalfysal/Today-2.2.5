@@ -42,6 +42,8 @@ export default function UserProfilePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  const isFollowing = currentUser?.following?.includes(userId) ?? false;
+  
   useEffect(() => {
     if (!userId || !db) {
       setIsLoading(false);
@@ -100,6 +102,46 @@ export default function UserProfilePage() {
         unsubscribePosts();
     };
   }, [userId, currentUser, router, toast]);
+
+  const handleFollowToggle = async () => {
+    if (!currentUser || !userProfile || !db) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "You must be logged in to follow users."
+        });
+        return;
+    }
+
+    const currentUserRef = doc(db, "users", currentUser.uid);
+    const targetUserRef = doc(db, "users", userProfile.uid);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            if (isFollowing) {
+                // Unfollow
+                transaction.update(currentUserRef, { following: arrayRemove(userProfile.uid) });
+                transaction.update(targetUserRef, { followers: arrayRemove(currentUser.uid) });
+            } else {
+                // Follow
+                transaction.update(currentUserRef, { following: arrayUnion(userProfile.uid) });
+                transaction.update(targetUserRef, { followers: arrayUnion(currentUser.uid) });
+            }
+        });
+        toast({
+            title: isFollowing ? "Unfollowed" : "Followed",
+            description: `You are no longer following ${userProfile.name}.`
+        })
+    } catch (error) {
+        console.error("Error toggling follow:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: `Could not ${isFollowing ? 'unfollow' : 'follow'} the user.`
+        });
+    }
+  };
+
 
   if (isLoading) {
     return <UserProfileSkeleton />;
@@ -242,7 +284,12 @@ export default function UserProfilePage() {
       <div className="flex flex-col h-screen">
         <main className="container mx-auto max-w-2xl p-4 flex-1 overflow-y-auto">
           <div className="w-full max-w-sm mx-auto">
-            <ProfileCard user={userProfile} />
+            <ProfileCard 
+              user={userProfile} 
+              isOwnProfile={false}
+              isFollowing={isFollowing}
+              onFollowToggle={handleFollowToggle}
+            />
           </div>
           <div className="mt-8 space-y-6">
             <PostFeed
