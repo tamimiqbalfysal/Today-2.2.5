@@ -344,7 +344,12 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                         <div>
                             <div className="flex items-center gap-2">
                                 <Link href={profileLink}>
-                                    <p className="font-semibold text-lg text-orange-500 hover:underline">{post.authorName || 'Anonymous'}</p>
+                                    <p 
+                                      className="font-semibold text-lg hover:underline"
+                                      style={{ color: post.localColor || '#FFA500' }}
+                                    >
+                                      {post.authorName || 'Anonymous'}
+                                    </p>
                                 </Link>
                                 {post.isPrivate && (
                                      isAuthor ? makePublicDialog : <Lock className="h-4 w-4 text-muted-foreground" title="This post is private" />
