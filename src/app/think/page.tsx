@@ -155,7 +155,7 @@ export default function ThinkPage() {
       if (!querySnapshot.empty) {
         toast({ variant: 'destructive', title: 'Already Registered', description: 'This email address has already been used to register for the course.' });
         setIsRegistered(true);
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && !user) {
             localStorage.setItem('thinkCourseEmail', email.trim());
         }
         return;
