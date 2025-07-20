@@ -14,14 +14,13 @@ import { Label } from "../ui/label";
 
 interface CreatePostFormProps {
   user: User;
-  onAddPost: (content: string, contentBangla: string, file: File | null, fileBangla: File | null, defenceCredit: number, globalColor: string, localColor: string) => Promise<void>;
+  onAddPost: (content: string, contentBangla: string, file: File | null, fileBangla: File | null, defenceCredit: number, localColor: string) => Promise<void>;
 }
 
 export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
   const [content, setContent] = useState("");
   const [contentBangla, setContentBangla] = useState("");
   const [defenceCredit, setDefenceCredit] = useState("");
-  const [globalColor, setGlobalColor] = useState("#000000");
   const [localColor, setLocalColor] = useState("#000000");
   
   const [file, setFile] = useState<File | null>(null);
@@ -79,11 +78,10 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
     setIsSubmitting(true);
     const creditAmount = parseInt(defenceCredit, 10) || 0;
     try {
-      await onAddPost(content, contentBangla, file, fileBangla, creditAmount, globalColor, localColor);
+      await onAddPost(content, contentBangla, file, fileBangla, creditAmount, localColor);
       setContent("");
       setContentBangla("");
       setDefenceCredit("");
-      setGlobalColor("#000000");
       setLocalColor("#000000");
       handleRemoveFile('en');
       handleRemoveFile('bn');
@@ -209,18 +207,6 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
           
         <div className="flex justify-between items-center pt-4">
           <div className="flex items-center gap-4">
-             <div className="flex items-center gap-2">
-                <Label htmlFor="global-color" className="text-sm text-muted-foreground">Global</Label>
-                 <input 
-                    type="color" 
-                    id="global-color"
-                    value={globalColor}
-                    onChange={(e) => setGlobalColor(e.target.value)}
-                    className="w-8 h-8 p-0 border-none cursor-pointer rounded-md bg-transparent"
-                    disabled={isSubmitting}
-                    title="Global Content Color"
-                 />
-             </div>
              <div className="flex items-center gap-2">
                 <Label htmlFor="local-color" className="text-sm text-muted-foreground">Local</Label>
                  <input 

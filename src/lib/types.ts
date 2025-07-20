@@ -46,7 +46,6 @@ export interface Post {
   defenceCredit?: number;
   isPrivate?: boolean;
   offenceCredit?: number;
-  globalColor?: string;
   localColor?: string;
 }
 

@@ -28,6 +28,7 @@ interface SharePostDialogProps {
     file: File | null,
     fileBangla: File | null,
     defenceCredit: number,
+    localColor: string,
     postType: 'original' | 'share',
     sharedPostId: string
   ) => Promise<void>;
@@ -48,7 +49,7 @@ export function SharePostDialog({
 
     setIsSubmitting(true);
     try {
-      await onSharePost(content, '', null, null, 0, 'share', postToShare.id);
+      await onSharePost(content, '', null, null, 0, '', 'share', postToShare.id);
       setContent('');
       onOpenChange(false);
     } catch (error) {
