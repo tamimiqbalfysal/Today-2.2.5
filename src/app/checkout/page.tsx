@@ -24,7 +24,7 @@ export default function CheckoutPage() {
   const handleProceedToPayment = () => {
     toast({
       title: 'Success!',
-      description: 'Your order has been placed. (This is a simulation)',
+      description: 'Your order has been placed.',
     });
     
     // Add items to purchased list
