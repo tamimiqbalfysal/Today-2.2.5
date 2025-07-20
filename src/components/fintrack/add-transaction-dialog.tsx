@@ -141,7 +141,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
                 <Languages className="h-4 w-4" /> Global
               </label>
               <Textarea
-                placeholder={`What's happening, ${user.name}?`}
+                placeholder="Write for your global audience."
                 className="flex-1 p-3 rounded-lg bg-secondary border-border focus:outline-none focus:ring-2 focus:ring-primary text-secondary-foreground placeholder:text-muted-foreground text-sm min-h-[6rem]"
                 value={content}
                 onChange={(e) => setContent(e.target.value.replace(/[^a-zA-Z0-9\s.,!?'"()\-&%$#@*+=\[\]{}:;<>|/\\~`^]/g, ''))}
@@ -175,7 +175,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
                 <Languages className="h-4 w-4" /> Local
               </label>
               <Textarea
-                placeholder={`বাংলায় কী ঘটছে?`}
+                placeholder="Write for your local audience."
                 className="flex-1 p-3 rounded-lg bg-secondary border-border focus:outline-none focus:ring-2 focus:ring-primary text-secondary-foreground placeholder:text-muted-foreground text-sm min-h-[6rem]"
                 value={contentBangla}
                 onChange={(e) => setContentBangla(e.target.value)}
