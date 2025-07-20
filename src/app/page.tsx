@@ -70,12 +70,13 @@ export default function TodayPage() {
     setIsDataLoading(true);
     const postsCol = collection(db, 'posts');
     
-    // If a user is logged in, show their private posts as well.
-    // Otherwise, only show public posts.
+    // Fetch only public posts for guests or all posts for logged-in users.
+    // The composite index error happens when combining where() with orderBy() on different fields.
+    // To avoid this without requiring the user to create an index, we fetch without ordering by timestamp
+    // and sort the results on the client side.
     const q = query(
       postsCol, 
-      where("isPrivate", "==", false),
-      orderBy("timestamp", "desc")
+      where("isPrivate", "==", false)
     );
 
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
@@ -90,10 +91,12 @@ export default function TodayPage() {
         // Combine public and private posts, remove duplicates, and sort
         const allPosts = [...fetchedPosts, ...privatePosts];
         const uniquePosts = Array.from(new Map(allPosts.map(p => [p.id, p])).values());
-        uniquePosts.sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
+        uniquePosts.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
 
         setPosts(uniquePosts);
       } else {
+        // For guests, sort the public posts on the client
+        fetchedPosts.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
         setPosts(fetchedPosts);
       }
 
@@ -103,6 +106,8 @@ export default function TodayPage() {
       let description = "Could not load posts.";
       if (error.code === 'permission-denied') {
         description = "You don't have permission to view posts. Please check your Firestore security rules to allow reads on the 'posts' collection for authenticated users.";
+      } else if (error.code === 'failed-precondition') {
+        description = "The query requires a database index. Please create it in your Firebase console.";
       }
       toast({
         variant: "destructive",
