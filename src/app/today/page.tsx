@@ -114,6 +114,7 @@ export default function TodayPage() {
           likes: [],
           comments: [],
           type: postType,
+          isPrivate: false,
           ...(mediaURL && { mediaURL }),
           ...(mediaType && { mediaType }),
           ...(mediaURLBangla && { mediaURLBangla }),
