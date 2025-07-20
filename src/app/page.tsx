@@ -70,34 +70,31 @@ export default function TodayPage() {
     setIsDataLoading(true);
     const postsCol = collection(db, 'posts');
     
-    // Fetch only public posts for guests or all posts for logged-in users.
-    // The composite index error happens when combining where() with orderBy() on different fields.
-    // To avoid this without requiring the user to create an index, we fetch without ordering by timestamp
-    // and sort the results on the client side.
+    // The query fetches all public posts.
     const q = query(
       postsCol, 
       where("isPrivate", "==", false)
     );
 
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      const fetchedPosts: Post[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      const publicPosts: Post[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
       
-      // If user is logged in, we need to fetch their private posts separately and merge
+      // If user is logged in, fetch their private posts and merge them.
       if (user?.uid) {
         const privatePostsQuery = query(postsCol, where("authorId", "==", user.uid), where("isPrivate", "==", true));
         const privatePostsSnapshot = await getDocs(privatePostsQuery);
         const privatePosts = privatePostsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
         
-        // Combine public and private posts, remove duplicates, and sort
-        const allPosts = [...fetchedPosts, ...privatePosts];
+        // Combine public and private posts, remove duplicates (if any), and sort
+        const allPosts = [...publicPosts, ...privatePosts];
         const uniquePosts = Array.from(new Map(allPosts.map(p => [p.id, p])).values());
         uniquePosts.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
 
         setPosts(uniquePosts);
       } else {
-        // For guests, sort the public posts on the client
-        fetchedPosts.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
-        setPosts(fetchedPosts);
+        // For guests, just show sorted public posts.
+        publicPosts.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
+        setPosts(publicPosts);
       }
 
       setIsDataLoading(false);
