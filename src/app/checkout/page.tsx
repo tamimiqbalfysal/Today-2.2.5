@@ -5,7 +5,6 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -47,7 +46,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <Header />
       <main className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center mb-8">

@@ -8,8 +8,6 @@ import type { User, Post } from '@/lib/types';
 import { db, storage } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { Header } from '@/components/fintrack/header';
 import { ProfileCard } from '@/components/fintrack/overview';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostFeed } from '@/components/fintrack/recent-transactions';
@@ -17,20 +15,17 @@ import { addDoc } from 'firebase/firestore';
 
 function ProfileSkeleton() {
     return (
-        <AuthGuard>
-            <div className="flex flex-col min-h-screen">
-                <Header />
-                <main className="container mx-auto max-w-2xl p-4 flex-1">
-                    <div className="w-full max-w-sm mx-auto">
-                        <Skeleton className="h-64 w-full" />
-                    </div>
-                    <div className="mt-8 space-y-6">
-                        <Skeleton className="h-[450px] w-full" />
-                        <Skeleton className="h-[450px] w-full" />
-                    </div>
-                </main>
-            </div>
-        </AuthGuard>
+        <div className="flex flex-col min-h-screen">
+            <main className="container mx-auto max-w-2xl p-4 flex-1">
+                <div className="w-full max-w-sm mx-auto">
+                    <Skeleton className="h-64 w-full" />
+                </div>
+                <div className="mt-8 space-y-6">
+                    <Skeleton className="h-[450px] w-full" />
+                    <Skeleton className="h-[450px] w-full" />
+                </div>
+            </main>
+        </div>
     );
 }
 
@@ -195,9 +190,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <AuthGuard>
         <div className="flex flex-col h-screen">
-          <Header />
           <main className="container mx-auto max-w-2xl p-4 flex-1 overflow-y-auto">
              <div className="w-full max-w-sm mx-auto">
                 <ProfileCard user={user!} />
@@ -215,6 +208,5 @@ export default function ProfilePage() {
             </div>
           </main>
         </div>
-    </AuthGuard>
   );
 }

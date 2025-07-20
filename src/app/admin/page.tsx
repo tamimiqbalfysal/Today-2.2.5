@@ -6,8 +6,6 @@ import { collection, doc, setDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -60,9 +58,7 @@ export default function AdminPage() {
   };
 
   return (
-    <AuthGuard>
       <div className="flex flex-col h-screen">
-        <Header />
         <main className="flex-1 overflow-y-auto">
           <div className="container mx-auto max-w-2xl p-4 flex flex-col items-center justify-center">
             <div className="w-full space-y-8">
@@ -153,6 +149,5 @@ export default function AdminPage() {
           </div>
         </main>
       </div>
-    </AuthGuard>
   );
 }

@@ -4,7 +4,6 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -161,7 +160,6 @@ export default function AttomPage() {
 
   return (
       <div className="flex flex-col h-screen bg-background">
-        <Header isVisible={isHeaderVisible} />
         <main
           ref={scrollContainerRef}
           onScroll={handleScroll}

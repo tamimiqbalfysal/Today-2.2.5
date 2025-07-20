@@ -48,15 +48,11 @@ const formatCredits = (num: number): string => {
 
 export function FloatingCounterButton() {
   const { user, loading } = useAuth();
-  const pathname = usePathname();
 
   const credits = user?.credits ?? 0;
   const unreadCount = user?.notifications?.filter(n => !n.read).length ?? 0;
 
-  // Don't show the button on auth pages
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
-
-  if (loading || !user || isAuthPage) {
+  if (loading || !user) {
     return null;
   }
 

@@ -2,8 +2,6 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import { RollTheDice } from '@/components/bitt/roll-the-dice';
 import { Whiteboard } from '@/components/bitt/whiteboard';
@@ -31,9 +29,7 @@ export default function BittPage() {
   };
 
   return (
-    <AuthGuard>
       <div className="flex flex-col h-screen bg-secondary">
-        <Header isVisible={isHeaderVisible}/>
         <main 
           ref={scrollContainerRef}
           onScroll={handleScroll}
@@ -70,6 +66,5 @@ export default function BittPage() {
           </div>
         </main>
       </div>
-    </AuthGuard>
   );
 }

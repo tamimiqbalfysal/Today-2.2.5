@@ -2,15 +2,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Users, Calendar, Video, CheckCircle, Loader2, User as UserIcon, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import type { ThinkCourse } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -20,7 +18,6 @@ import { Label } from '@/components/ui/label';
 function ThinkPageSkeleton() {
   return (
     <div className="flex flex-col h-screen bg-background">
-      <Header />
       <main className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-2xl">
           <CardHeader className="text-center">
@@ -194,7 +191,6 @@ export default function ThinkPage() {
 
   return (
       <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
         <main className="flex-1 flex items-center justify-center p-4">
           <Card className="w-full max-w-2xl shadow-2xl rounded-2xl">
             <CardHeader className="text-center p-8">

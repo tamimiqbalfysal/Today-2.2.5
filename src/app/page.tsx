@@ -10,8 +10,6 @@ import { useAuth } from '@/contexts/auth-context';
 import type { Post } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { Header } from '@/components/fintrack/header';
 import { PostFeed } from '@/components/fintrack/recent-transactions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ThinkCodeDialog } from '@/components/fintrack/gift-code-dialog';
@@ -20,15 +18,6 @@ import { Button } from '@/components/ui/button';
 function TodaySkeleton() {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="bg-primary p-4 sticky top-0 z-10 shadow-md">
-        <div className="container mx-auto flex items-center justify-between">
-          <Skeleton className="h-10 w-10 rounded-full bg-primary/80" />
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-8 w-32 bg-primary/80" />
-            <Skeleton className="h-10 w-10 rounded-full bg-primary/80" />
-          </div>
-        </div>
-      </header>
       <main className="container mx-auto p-4 max-w-5xl space-y-6 flex-1">
           <Skeleton className="h-[450px] w-full" />
           <Skeleton className="h-[450px] w-full" />
@@ -516,9 +505,7 @@ export default function TodayPage() {
   }
 
   return (
-    <AuthGuard>
         <div className="flex flex-col h-screen">
-          <Header isVisible={isHeaderVisible} />
           <main 
             ref={scrollContainerRef}
             onScroll={handleScroll}
@@ -543,6 +530,5 @@ export default function TodayPage() {
             userId={user?.uid}
           />
         </div>
-    </AuthGuard>
   );
 }

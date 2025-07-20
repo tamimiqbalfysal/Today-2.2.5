@@ -3,8 +3,6 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { Header } from '@/components/fintrack/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -84,9 +82,7 @@ export default function AddPage() {
   };
 
   return (
-    <AuthGuard>
       <div className="flex flex-col h-screen">
-        <Header isVisible={isHeaderVisible} />
         <main 
           ref={scrollContainerRef}
           onScroll={handleScroll}
@@ -207,6 +203,5 @@ export default function AddPage() {
           </div>
         </main>
       </div>
-    </AuthGuard>
   );
 }

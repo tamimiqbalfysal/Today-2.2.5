@@ -13,7 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { formatDistanceToNow } from 'date-fns';
 
-import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,7 +29,6 @@ import { ReviewForm } from '@/components/fintrack/review-form';
 function ProductPageSkeleton() {
   return (
     <div className="flex flex-col h-screen bg-background">
-      <Header />
       <main className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <Skeleton className="h-8 w-24 mb-8" />
@@ -232,7 +230,6 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div className="flex flex-col h-screen bg-background">
-        <Header />
         <main className="flex-1 flex flex-col items-center justify-center text-center p-4">
           <h1 className="text-2xl font-bold">Product Not Found</h1>
           <p className="text-muted-foreground">The product you are looking for does not exist.</p>
@@ -249,7 +246,6 @@ export default function ProductDetailPage() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <Header />
       <main className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="flex justify-between items-center mb-8">

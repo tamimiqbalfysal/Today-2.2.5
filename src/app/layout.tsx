@@ -2,6 +2,8 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AppProviders } from '@/components/app-providers';
+import { NotificationSheet } from '@/components/fintrack/notification-sheet';
+import { RootGuard } from '@/components/auth/root-guard';
 
 export const metadata: Metadata = {
   title: 'Modern App',
@@ -22,7 +24,11 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased" suppressHydrationWarning>
         <AppProviders>
-          {children}
+          <NotificationSheet>
+            <RootGuard>
+              {children}
+            </RootGuard>
+          </NotificationSheet>
         </AppProviders>
         <Toaster />
       </body>

@@ -5,8 +5,6 @@ import { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -84,9 +82,7 @@ export default function ThinkSettingsPage() {
   };
 
   return (
-    <AuthGuard>
       <div className="flex flex-col h-screen">
-        <Header />
         <main className="flex-1 overflow-y-auto">
           <div className="container mx-auto max-w-2xl p-4 flex flex-col items-center justify-center">
             {isLoading ? (
@@ -155,6 +151,5 @@ export default function ThinkSettingsPage() {
           </div>
         </main>
       </div>
-    </AuthGuard>
   );
 }

@@ -3,7 +3,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { Header } from '@/components/fintrack/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,7 +16,6 @@ import type { Post as Product } from '@/lib/types';
 import Image from 'next/image';
 import { Upload, Star, ShoppingCart, Trash2, Info } from 'lucide-react';
 import Link from 'next/link';
-import { AuthGuard } from '@/components/auth/auth-guard';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
@@ -250,9 +248,7 @@ export default function TribePage() {
 
 
   return (
-    <AuthGuard>
       <div className="flex flex-col min-h-screen bg-background">
-        <Header />
         <main className="flex-1 overflow-y-auto container mx-auto px-4 py-8">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-primary">
@@ -331,6 +327,5 @@ export default function TribePage() {
           </div>
         </main>
       </div>
-    </AuthGuard>
   );
 }

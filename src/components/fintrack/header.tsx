@@ -188,26 +188,7 @@ export function Header({ isVisible = true }: HeaderProps) {
                 </Sheet>
               </div>
             </>
-          ) : (
-            <>
-              {/* LOGGED OUT STATE */}
-               <div className="justify-self-start">
-                  <Link href="/" aria-label="Home">
-                    <Button size="icon" variant="ghost" className="rounded-full">
-                        <Home />
-                    </Button>
-                  </Link>
-               </div>
-               <div className="col-start-3 justify-self-end flex items-center space-x-2">
-                   <Button asChild variant="ghost">
-                      <Link href="/login">Log In</Link>
-                  </Button>
-                  <Button asChild>
-                      <Link href="/signup">Sign Up</Link>
-                  </Button>
-              </div>
-            </>
-          )}
+          ) : null }
         </div>
       </header>
       

@@ -8,8 +8,6 @@ import Confetti from 'react-confetti';
 import { useState, useRef, useEffect } from 'react';
 
 import { db } from '@/lib/firebase';
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { Header } from '@/components/fintrack/header';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,7 +21,6 @@ import { cn } from '@/lib/utils';
 function ThankYouSkeleton() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="container mx-auto max-w-2xl p-4 flex-1 flex flex-col items-center justify-center">
         <div className="w-full max-w-md space-y-6">
           <Card>
@@ -250,7 +247,7 @@ export default function ThankYouPage() {
   }
 
   return (
-    <AuthGuard>
+    <>
       {isCelebrating && width > 0 && height > 0 && (
         <Confetti
           width={width}
@@ -260,7 +257,6 @@ export default function ThankYouPage() {
         />
       )}
       <div className="theme-navy flex flex-col h-screen">
-        <Header isVisible={isHeaderVisible} />
         <main 
           ref={scrollContainerRef}
           onScroll={handleScroll}
@@ -389,7 +385,7 @@ export default function ThankYouPage() {
           </div>
         </main>
       </div>
-    </AuthGuard>
+    </>
   );
 }
 

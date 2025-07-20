@@ -10,8 +10,6 @@ import { useAuth } from '@/contexts/auth-context';
 import type { User, Post } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { Header } from '@/components/fintrack/header';
 import { CreatePostForm } from '@/components/fintrack/add-transaction-dialog';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,7 +18,6 @@ import { ThinkCodeDialog } from '@/components/fintrack/gift-code-dialog';
 function TodaySkeleton() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header isVisible={true} />
       <main className="container mx-auto p-4 max-w-2xl space-y-6 flex-1">
           <Skeleton className="h-[250px] w-full" />
       </main>
@@ -197,9 +194,7 @@ export default function TodayPage() {
   };
 
   return (
-    <AuthGuard>
         <div className="flex flex-col h-screen">
-          <Header isVisible={isHeaderVisible} />
           <main 
             ref={scrollContainerRef}
             onScroll={handleScroll}
@@ -222,6 +217,5 @@ export default function TodayPage() {
             userId={user?.uid}
           />
         </div>
-    </AuthGuard>
   );
 }

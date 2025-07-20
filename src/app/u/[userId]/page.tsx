@@ -7,8 +7,6 @@ import { db, storage } from '@/lib/firebase';
 import type { User, Post } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from "@/hooks/use-toast";
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { Header } from '@/components/fintrack/header';
 import { ProfileCard } from '@/components/fintrack/overview';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostFeed } from '@/components/fintrack/recent-transactions';
@@ -18,9 +16,7 @@ import { ref, deleteObject } from "firebase/storage";
 
 function UserProfileSkeleton() {
   return (
-    <AuthGuard>
       <div className="flex flex-col min-h-screen">
-        <Header />
         <main className="container mx-auto max-w-2xl p-4 flex-1">
           <div className="w-full max-w-sm mx-auto">
             <Skeleton className="h-64 w-full" />
@@ -31,7 +27,6 @@ function UserProfileSkeleton() {
           </div>
         </main>
       </div>
-    </AuthGuard>
   );
 }
 
@@ -112,14 +107,11 @@ export default function UserProfilePage() {
 
   if (!userProfile) {
     return (
-      <AuthGuard>
         <div className="flex flex-col h-screen">
-          <Header />
           <main className="flex-1 flex items-center justify-center">
             <p>User not found.</p>
           </main>
         </div>
-      </AuthGuard>
     );
   }
 
@@ -247,9 +239,7 @@ export default function UserProfilePage() {
   };
 
   return (
-    <AuthGuard>
       <div className="flex flex-col h-screen">
-        <Header />
         <main className="container mx-auto max-w-2xl p-4 flex-1 overflow-y-auto">
           <div className="w-full max-w-sm mx-auto">
             <ProfileCard user={userProfile} />
@@ -266,6 +256,5 @@ export default function UserProfilePage() {
           </div>
         </main>
       </div>
-    </AuthGuard>
   );
 }
