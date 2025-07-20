@@ -38,7 +38,7 @@ export default function TodayPage() {
   const [isThinkCodeDialogOpen, setIsThinkCodeDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || authLoading || !user) return;
+    if (typeof window === 'undefined' || authLoading) return;
     
     if (user && user.redeemedThinkCodes === 0) {
       const timeoutId = setTimeout(() => {
@@ -67,21 +67,36 @@ export default function TodayPage() {
   useEffect(() => {
     if (authLoading || !db) return; 
     
-    if (!user) {
-      setIsDataLoading(false);
-      return;
-    }
-
     setIsDataLoading(true);
     const postsCol = collection(db, 'posts');
-    const q = query(postsCol, orderBy("timestamp", "desc"));
+    
+    // If a user is logged in, show their private posts as well.
+    // Otherwise, only show public posts.
+    const q = query(
+      postsCol, 
+      where("isPrivate", "==", false),
+      orderBy("timestamp", "desc")
+    );
 
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      const fetchedPosts: Post[] = querySnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() } as Post))
-        .filter(post => !post.isPrivate || post.authorId === user?.uid);
+      const fetchedPosts: Post[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      
+      // If user is logged in, we need to fetch their private posts separately and merge
+      if (user?.uid) {
+        const privatePostsQuery = query(postsCol, where("authorId", "==", user.uid), where("isPrivate", "==", true));
+        const privatePostsSnapshot = await getDocs(privatePostsQuery);
+        const privatePosts = privatePostsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        
+        // Combine public and private posts, remove duplicates, and sort
+        const allPosts = [...fetchedPosts, ...privatePosts];
+        const uniquePosts = Array.from(new Map(allPosts.map(p => [p.id, p])).values());
+        uniquePosts.sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
 
-      setPosts(fetchedPosts);
+        setPosts(uniquePosts);
+      } else {
+        setPosts(fetchedPosts);
+      }
+
       setIsDataLoading(false);
     }, (error: any) => {
       console.error("Error fetching posts:", error);
@@ -500,7 +515,7 @@ export default function TodayPage() {
 
 
   
-  if (authLoading || (isDataLoading && user)) {
+  if (authLoading || isDataLoading) {
     return <TodaySkeleton />;
   }
 
@@ -524,11 +539,13 @@ export default function TodayPage() {
                 />
             </div>
           </main>
-          <ThinkCodeDialog
-            open={isThinkCodeDialogOpen}
-            onOpenChange={setIsThinkCodeDialogOpen}
-            userId={user?.uid}
-          />
+          {user && (
+            <ThinkCodeDialog
+              open={isThinkCodeDialogOpen}
+              onOpenChange={setIsThinkCodeDialogOpen}
+              userId={user?.uid}
+            />
+          )}
         </div>
   );
 }

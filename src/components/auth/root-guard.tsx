@@ -8,37 +8,29 @@ import { Header } from '@/components/fintrack/header';
 import { FloatingCounterButton } from '@/components/fintrack/floating-counter-button';
 import { FloatingCartButton } from '@/components/fintrack/floating-cart-button';
 
+// Routes that MUST have an authenticated user.
 const PROTECTED_ROUTES = [
-  '/',
   '/today',
   '/profile',
   '/add',
   '/admin',
   '/thank-you',
   '/marketplace',
-  '/attom', // Assuming base is protected
-  '/bitt',
-  '/gift-garden',
-  '/orgrim',
-  '/secondsell',
-  '/marco-polo',
-  '/printit',
-  '/machinehood',
   '/tribe',
   '/checkout'
 ];
 
-const DYNAMIC_PROTECTED_ROUTES = [
-  '/u/',
-  '/attom/'
+// Dynamic routes that are protected.
+const DYNAMIC_PROTECTED_ROUTES_PREFIX = [
+  '/admin/',
 ];
 
 export function RootGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const pathname = usePathname();
 
   const isProtectedRoute = PROTECTED_ROUTES.includes(pathname) || 
-                           DYNAMIC_PROTECTED_ROUTES.some(p => pathname.startsWith(p));
+                           DYNAMIC_PROTECTED_ROUTES_PREFIX.some(p => pathname.startsWith(p));
   
   const showHeader = !['/login', '/signup'].includes(pathname);
 
@@ -53,7 +45,7 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // Public routes
+  // Public routes (like '/', '/attom', '/bitt', etc.)
   return (
     <>
       {showHeader && <Header />}

@@ -188,7 +188,28 @@ export function Header({ isVisible = true }: HeaderProps) {
                 </Sheet>
               </div>
             </>
-          ) : null }
+          ) : (
+            <>
+              <div className="justify-self-start">
+                  {/* Placeholder to keep layout consistent */}
+              </div>
+              <div className="justify-self-center flex flex-col items-center">
+                <Link href="/" aria-label="Home">
+                  <Button size="icon" variant="ghost" className="rounded-full">
+                    <Home />
+                  </Button>
+                </Link>
+              </div>
+              <div className="justify-self-end flex items-center gap-2">
+                <Button asChild variant="outline">
+                    <Link href="/login">Log In</Link>
+                </Button>
+                <Button asChild>
+                    <Link href="/signup">Sign Up</Link>
+                </Button>
+              </div>
+            </>
+          ) }
         </div>
       </header>
       
