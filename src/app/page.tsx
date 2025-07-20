@@ -118,10 +118,10 @@ export default function TodayPage() {
     return () => unsubscribe();
   }, [user, authLoading, toast]);
 
-    const handleLikePost = async (postId: string, authorId: string) => {
+    const handleReaction = async (postId: string, authorId: string, reaction: 'like' | 'laugh') => {
         if (!user || !db) return;
         const postRef = doc(db, 'posts', postId);
-        const likerId = user.uid;
+        const reactorId = user.uid;
 
         try {
             await runTransaction(db, async (transaction) => {
@@ -131,31 +131,35 @@ export default function TodayPage() {
                 }
 
                 const postData = postDoc.data();
-                const currentLikes: string[] = postData.likes || [];
-                const isLiking = !currentLikes.includes(likerId);
+                const reactionField = reaction === 'like' ? 'likes' : 'laughs';
+                const currentReactors: string[] = postData[reactionField] || [];
+                const isReacting = !currentReactors.includes(reactorId);
                 
                 const authorRef = doc(db, 'users', authorId);
-                const likerRef = doc(db, 'users', likerId);
+                const reactorRef = doc(db, 'users', reactorId);
                 const authorDoc = await transaction.get(authorRef);
-                const likerDoc = await transaction.get(likerRef);
+                const reactorDoc = await transaction.get(reactorRef);
 
-                if (!authorDoc.exists() || !likerDoc.exists()) {
+                if (!authorDoc.exists() || !reactorDoc.exists()) {
                     throw "User does not exist!";
                 }
+                
+                const updateData: { [key: string]: any } = {};
 
-                if (isLiking) {
-                    transaction.update(postRef, { 
-                        likes: arrayUnion(likerId),
-                        defenceCredit: increment(1) 
-                    });
-                    transaction.update(authorRef, { followers: arrayUnion(likerId) });
-                    transaction.update(likerRef, { following: arrayUnion(authorId) });
+                if (isReacting) {
+                    updateData[reactionField] = arrayUnion(reactorId);
+                    if (reaction === 'like') {
+                       updateData.defenceCredit = increment(1);
+                    }
+                    transaction.update(postRef, updateData);
+                    transaction.update(authorRef, { followers: arrayUnion(reactorId) });
+                    transaction.update(reactorRef, { following: arrayUnion(authorId) });
 
-                    if (authorId !== likerId) {
+                    if (authorId !== reactorId) {
                         const notificationRef = doc(collection(db, `users/${authorId}/notifications`));
                         transaction.set(notificationRef, {
                             type: 'like',
-                            senderId: likerId,
+                            senderId: reactorId,
                             senderName: user.name,
                             senderPhotoURL: user.photoURL || '',
                             postId: postId,
@@ -166,16 +170,17 @@ export default function TodayPage() {
                         transaction.update(authorRef, { unreadNotifications: true });
                     }
                 } else {
-                    transaction.update(postRef, { 
-                        likes: arrayRemove(likerId),
-                        defenceCredit: increment(-1) 
-                    });
-                    transaction.update(authorRef, { followers: arrayRemove(likerId) });
-                    transaction.update(likerRef, { following: arrayRemove(authorId) });
+                    updateData[reactionField] = arrayRemove(reactorId);
+                    if (reaction === 'like') {
+                       updateData.defenceCredit = increment(-1);
+                    }
+                    transaction.update(postRef, updateData);
+                    transaction.update(authorRef, { followers: arrayRemove(reactorId) });
+                    transaction.update(reactorRef, { following: arrayRemove(authorId) });
 
-                     if (authorId !== likerId) {
+                     if (authorId !== reactorId) {
                         const notificationsCollection = collection(db, `users/${authorId}/notifications`);
-                        const q = query(notificationsCollection, where("postId", "==", postId), where("senderId", "==", likerId), where("type", "==", "like"));
+                        const q = query(notificationsCollection, where("postId", "==", postId), where("senderId", "==", reactorId), where("type", "==", "like"));
                         const querySnapshot = await getDocs(q);
                         querySnapshot.forEach((doc) => {
                             transaction.delete(doc.ref);
@@ -184,8 +189,8 @@ export default function TodayPage() {
                 }
             });
         } catch (error: any) {
-            console.error("Error liking post:", error);
-            let description = "Could not update like status.";
+            console.error("Error reacting to post:", error);
+            let description = "Could not update reaction.";
             if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
                 description = "Permission Denied. Please check your Firestore security rules to allow 'update' on the 'posts' collection and 'write' on the 'users' collection for notifications.";
             }
@@ -275,6 +280,7 @@ export default function TodayPage() {
           contentBangla: contentBangla,
           timestamp: Timestamp.now(),
           likes: [],
+          laughs: [],
           comments: [],
           type: postType,
           isPrivate: false,
@@ -535,7 +541,7 @@ export default function TodayPage() {
                 onDeletePost={handleDeletePost}
                 onMakePostPrivate={handleMakePostPrivate}
                 onMakePostPublic={handleMakePostPublic}
-                onLikePost={handleLikePost}
+                onReact={handleReaction}
                 onCommentPost={handleCommentPost}
                 onSharePost={handleAddPost}
                 />

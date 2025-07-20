@@ -39,7 +39,7 @@ interface PostCardProps {
   onDelete?: (postId: string, mediaUrl?: string) => void;
   onMakePostPrivate?: (post: Post, offenceCredit: number) => void;
   onMakePostPublic?: (postId: string, newDefenceCredit: number) => void;
-  onLike?: (postId: string, authorId: string) => void;
+  onReact: (postId: string, authorId: string, reaction: 'like' | 'laugh') => void;
   onComment?: (postId: string, commentText: string) => Promise<void>;
   onSharePost: (
     content: string,
@@ -109,11 +109,10 @@ function OriginalPostCard({ post }: { post: Post }) {
 }
 
 
-function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate, onMakePostPublic, onLike, onComment, onSharePost }: PostCardProps) {
+function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate, onMakePostPublic, onReact, onComment, onSharePost }: PostCardProps) {
     const [post, setPost] = useState(initialPost);
     const [author, setAuthor] = useState<User | null>(null);
     const [isLoadingAuthor, setIsLoadingAuthor] = useState(true);
-    const [hasLaughed, setHasLaughed] = useState(false);
     const [carouselApi, setCarouselApi] = useState<CarouselApi>();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [offenceCredit, setOffenceCredit] = useState('');
@@ -188,9 +187,9 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
 
     const currentUserInitial = currentUser?.name ? currentUser.name.charAt(0) : "U";
 
-    const handleHeartClick = () => {
-        if (!currentUser || !onLike) return;
-        onLike(post.id, post.authorId);
+    const handleReactionClick = (reaction: 'like' | 'laugh') => {
+        if (!currentUser || !onReact) return;
+        onReact(post.id, post.authorId, reaction);
     };
     
     const handleCommentClick = () => {
@@ -246,6 +245,8 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
     const isOffenceCreditSufficient = offenceCreditValue > defenceCreditValue;
     const isRepublishCreditSufficient = newDefenceCreditValue > lastOffenceCreditValue;
 
+    const hasLiked = post.likes.includes(currentUser?.uid || '');
+    const hasLaughed = post.laughs.includes(currentUser?.uid || '');
 
     const handleDeleteClick = () => {
         if (onDelete) {
@@ -417,13 +418,13 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                 
                 <div className="flex items-center justify-between pt-3 border-t border-border">
                     <div className="flex items-center">
-                        <Button variant="ghost" size="lg" onClick={handleHeartClick} className={cn("flex items-center gap-2", post.likes.includes(currentUser?.uid || '') ? "" : "text-muted-foreground")}>
-                            <Heart className={cn("h-6 w-6", post.likes.includes(currentUser?.uid || '') && "fill-red-500 text-red-500")} />
+                        <Button variant="ghost" size="lg" onClick={() => handleReactionClick('like')} className={cn("flex items-center gap-2", !hasLiked && "text-muted-foreground")}>
+                            <Heart className={cn("h-6 w-6", hasLiked && "fill-red-500 text-red-500")} />
                             {post.likes && post.likes.length > 0 && (
                                 <span className="font-semibold text-sm">{post.likes.length}</span>
                             )}
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setHasLaughed(!hasLaughed)} className={cn(!hasLaughed && "text-muted-foreground")}>
+                        <Button variant="ghost" size="icon" onClick={() => handleReactionClick('laugh')} className={cn(!hasLaughed && "text-muted-foreground")}>
                             <motion.div whileHover="laughing">
                                 <motion.svg 
                                     variants={{ laughing: laughAnimation.face }}
@@ -436,6 +437,9 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                                     <motion.path variants={{ laughing: laughAnimation.tear }} d="M17.5 11.5C17.5 12.328 16.828 13 16 13s-1.5-.672 1.5-1.5c0-.398.158-.755.41-1.031" fill={hasLaughed ? '#3498DB' : 'none'} stroke="none" opacity="0"/>
                                 </motion.svg>
                             </motion.div>
+                             {post.laughs && post.laughs.length > 0 && (
+                                <span className="font-semibold text-sm ml-1">{post.laughs.length}</span>
+                            )}
                         </Button>
                     </div>
 
@@ -583,7 +587,7 @@ interface PostFeedProps {
   onDeletePost: (postId: string, mediaUrl?: string) => void;
   onMakePostPrivate: (post: Post, offenceCredit: number) => void;
   onMakePostPublic: (postId: string, newDefenceCredit: number) => void;
-  onLikePost: (postId: string, authorId: string) => void;
+  onReact: (postId: string, authorId: string, reaction: 'like' | 'laugh') => void;
   onCommentPost: (postId: string, commentText: string) => Promise<void>;
   onSharePost: (
     content: string,
@@ -597,7 +601,7 @@ interface PostFeedProps {
   ) => Promise<void>;
 }
 
-export function PostFeed({ posts, currentUser, onDeletePost, onMakePostPrivate, onMakePostPublic, onLikePost, onCommentPost, onSharePost }: PostFeedProps) {
+export function PostFeed({ posts, currentUser, onDeletePost, onMakePostPrivate, onMakePostPublic, onReact, onCommentPost, onSharePost }: PostFeedProps) {
   if (!posts || posts.length === 0) {
     return (
       <div className="text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg">
@@ -629,7 +633,7 @@ export function PostFeed({ posts, currentUser, onDeletePost, onMakePostPrivate, 
                 onDelete={onDeletePost}
                 onMakePostPrivate={onMakePostPrivate}
                 onMakePostPublic={onMakePostPublic}
-                onLike={onLikePost} 
+                onReact={onReact} 
                 onComment={onCommentPost}
                 onSharePost={onSharePost}
                 />

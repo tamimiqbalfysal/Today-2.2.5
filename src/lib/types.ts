@@ -1,5 +1,4 @@
 
-
 import type { Timestamp } from "firebase/firestore";
 
 export interface User {
@@ -33,6 +32,7 @@ export interface Post {
   contentBangla?: string;
   timestamp: Timestamp;
   likes: string[]; // Array of user UIDs
+  laughs: string[]; // Array of user UIDs
   comments: Comment[];
   mediaURL?: string;
   mediaType?: 'image' | 'video';

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -168,55 +169,53 @@ export default function UserProfilePage() {
     );
   }
 
-  const handleLikePost = async (postId: string, authorId: string) => {
+  const handleReaction = async (postId: string, authorId: string, reaction: 'like' | 'laugh') => {
       if (!currentUser || !db) return;
       const postRef = doc(db, 'posts', postId);
-      const likerId = currentUser.uid;
+      const reactorId = currentUser.uid;
 
       try {
           await runTransaction(db, async (transaction) => {
               const postDoc = await transaction.get(postRef);
-              if (!postDoc.exists()) {
-                  throw "Post does not exist!";
-              }
-
+              if (!postDoc.exists()) throw "Post does not exist!";
+              
               const postData = postDoc.data();
-              const currentLikes: string[] = postData.likes || [];
-              const isLiking = !currentLikes.includes(likerId);
+              const reactionField = reaction === 'like' ? 'likes' : 'laughs';
+              const currentReactors: string[] = postData[reactionField] || [];
+              const isReacting = !currentReactors.includes(reactorId);
 
-              if (isLiking) {
-                  transaction.update(postRef, { likes: arrayUnion(likerId) });
+              const authorRef = doc(db, 'users', authorId);
+              const reactorRef = doc(db, 'users', reactorId);
+              
+              const updateData: { [key: string]: any } = {};
+              if (isReacting) {
+                  updateData[reactionField] = arrayUnion(reactorId);
+                  transaction.update(postRef, updateData);
+                  transaction.update(authorRef, { followers: arrayUnion(reactorId) });
+                  transaction.update(reactorRef, { following: arrayUnion(authorId) });
                   
-                  if (authorId !== likerId) {
+                  if (authorId !== reactorId) {
                       const notificationRef = doc(collection(db, `users/${authorId}/notifications`));
                       transaction.set(notificationRef, {
                           type: 'like',
-                          senderId: likerId,
+                          senderId: reactorId,
                           senderName: currentUser.name,
                           senderPhotoURL: currentUser.photoURL || '',
                           postId: postId,
                           timestamp: Timestamp.now(),
                           read: false,
                       });
-                      
-                      const userDocRef = doc(db, 'users', authorId);
-                      transaction.update(userDocRef, { unreadNotifications: true });
+                      transaction.update(authorRef, { unreadNotifications: true });
                   }
               } else {
-                  transaction.update(postRef, { likes: arrayRemove(likerId) });
-                   if (authorId !== likerId) {
-                      const notificationsCollection = collection(db, `users/${authorId}/notifications`);
-                      const q = query(notificationsCollection, where("postId", "==", postId), where("senderId", "==", likerId), where("type", "==", "like"));
-                      const querySnapshot = await getDocs(q);
-                      querySnapshot.forEach((doc) => {
-                          transaction.delete(doc.ref);
-                      });
-                  }
+                  updateData[reactionField] = arrayRemove(reactorId);
+                  transaction.update(postRef, updateData);
+                   // Note: We don't automatically unfollow on un-reacting. This is a design choice.
               }
           });
       } catch (error) {
-          console.error("Error liking post:", error);
-          toast({ variant: "destructive", title: "Error", description: "Could not update like status." });
+          console.error("Error reacting to post:", error);
+          toast({ variant: "destructive", title: "Error", description: "Could not update reaction." });
       }
   };
   
@@ -258,6 +257,7 @@ export default function UserProfilePage() {
         content,
         timestamp: Timestamp.now(),
         likes: [],
+        laughs: [],
         comments: [],
         type: postType,
         sharedPostId,
@@ -306,7 +306,7 @@ export default function UserProfilePage() {
             <PostFeed
                 posts={posts}
                 currentUser={currentUser}
-                onLikePost={handleLikePost}
+                onReact={handleReaction}
                 onCommentPost={handleCommentPost}
                 onDeletePost={handleDeletePost}
                 onSharePost={handleSharePost}

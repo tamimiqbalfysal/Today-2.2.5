@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot, doc, runTransaction, arrayUnion, arrayRemove, setDoc, updateDoc, getDoc, deleteDoc, Timestamp, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, runTransaction, arrayUnion, arrayRemove, setDoc, updateDoc, getDoc, deleteDoc, Timestamp, getDocs, increment } from 'firebase/firestore';
 import { ref, deleteObject } from "firebase/storage";
 import { useAuth } from '@/contexts/auth-context';
 import type { User, Post } from '@/lib/types';
@@ -71,10 +72,10 @@ export default function ProfilePage() {
     return <ProfileSkeleton />;
   }
 
-  const handleLikePost = async (postId: string, authorId: string) => {
+  const handleReaction = async (postId: string, authorId: string, reaction: 'like' | 'laugh') => {
       if (!user || !db) return;
       const postRef = doc(db, 'posts', postId);
-      const likerId = user.uid;
+      const reactorId = user.uid;
 
       try {
           await runTransaction(db, async (transaction) => {
@@ -84,42 +85,53 @@ export default function ProfilePage() {
               }
 
               const postData = postDoc.data();
-              const currentLikes: string[] = postData.likes || [];
-              const isLiking = !currentLikes.includes(likerId);
+              const reactionField = reaction === 'like' ? 'likes' : 'laughs';
+              const currentReactors: string[] = postData[reactionField] || [];
+              const isReacting = !currentReactors.includes(reactorId);
+              
+              if (authorId === reactorId) {
+                // If it's your own post, just toggle the reaction without affecting followers.
+                const updateData: { [key: string]: any } = {};
+                 if (isReacting) {
+                    updateData[reactionField] = arrayUnion(reactorId);
+                } else {
+                    updateData[reactionField] = arrayRemove(reactorId);
+                }
+                transaction.update(postRef, updateData);
+                return;
+              }
 
-              if (isLiking) {
-                  transaction.update(postRef, { likes: arrayUnion(likerId) });
+
+              const authorRef = doc(db, 'users', authorId);
+              const reactorRef = doc(db, 'users', reactorId);
+              
+              const updateData: { [key: string]: any } = {};
+              if (isReacting) {
+                  updateData[reactionField] = arrayUnion(reactorId);
+                  transaction.update(postRef, updateData);
+                  transaction.update(authorRef, { followers: arrayUnion(reactorId) });
+                  transaction.update(reactorRef, { following: arrayUnion(authorId) });
+
+                  const notificationRef = doc(collection(db, `users/${authorId}/notifications`));
+                  transaction.set(notificationRef, {
+                      type: 'like',
+                      senderId: reactorId,
+                      senderName: user.name,
+                      senderPhotoURL: user.photoURL || '',
+                      postId: postId,
+                      timestamp: Timestamp.now(),
+                      read: false,
+                  });
                   
-                  if (authorId !== likerId) {
-                      const notificationRef = doc(collection(db, `users/${authorId}/notifications`));
-                      transaction.set(notificationRef, {
-                          type: 'like',
-                          senderId: likerId,
-                          senderName: user.name,
-                          senderPhotoURL: user.photoURL || '',
-                          postId: postId,
-                          timestamp: Timestamp.now(),
-                          read: false,
-                      });
-                      
-                      const userDocRef = doc(db, 'users', authorId);
-                      transaction.update(userDocRef, { unreadNotifications: true });
-                  }
+                  transaction.update(authorRef, { unreadNotifications: true });
               } else {
-                  transaction.update(postRef, { likes: arrayRemove(likerId) });
-                  if (authorId !== likerId) {
-                      const notificationsCollection = collection(db, `users/${authorId}/notifications`);
-                      const q = query(notificationsCollection, where("postId", "==", postId), where("senderId", "==", likerId), where("type", "==", "like"));
-                      const querySnapshot = await getDocs(q);
-                      querySnapshot.forEach((doc) => {
-                          transaction.delete(doc.ref);
-                      });
-                  }
+                  updateData[reactionField] = arrayRemove(reactorId);
+                  transaction.update(postRef, updateData);
               }
           });
       } catch (error) {
-          console.error("Error liking post:", error);
-          toast({ variant: "destructive", title: "Error", description: "Could not update like status." });
+          console.error("Error reacting to post:", error);
+          toast({ variant: "destructive", title: "Error", description: "Could not update reaction." });
       }
   };
   
@@ -161,6 +173,7 @@ export default function ProfilePage() {
         content,
         timestamp: Timestamp.now(),
         likes: [],
+        laughs: [],
         comments: [],
         type: postType,
         sharedPostId,
@@ -200,7 +213,7 @@ export default function ProfilePage() {
                 <PostFeed
                     posts={posts}
                     currentUser={user}
-                    onLikePost={handleLikePost}
+                    onReact={handleReaction}
                     onCommentPost={handleCommentPost}
                     onDeletePost={handleDeletePost}
                     onSharePost={handleSharePost}
