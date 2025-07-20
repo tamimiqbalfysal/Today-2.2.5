@@ -5,7 +5,7 @@ import type { User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
-import { Image as ImageIcon, Video, X, Languages, Shield, AlertTriangle } from "lucide-react";
+import { Image as ImageIcon, Video, X, Languages, Shield, AlertTriangle, Palette } from "lucide-react";
 import Image from "next/image";
 import { Separator } from "../ui/separator";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -14,13 +14,15 @@ import { Label } from "../ui/label";
 
 interface CreatePostFormProps {
   user: User;
-  onAddPost: (content: string, contentBangla: string, file: File | null, fileBangla: File | null, defenceCredit: number) => Promise<void>;
+  onAddPost: (content: string, contentBangla: string, file: File | null, fileBangla: File | null, defenceCredit: number, globalColor: string, localColor: string) => Promise<void>;
 }
 
 export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
   const [content, setContent] = useState("");
   const [contentBangla, setContentBangla] = useState("");
   const [defenceCredit, setDefenceCredit] = useState("");
+  const [globalColor, setGlobalColor] = useState("#000000");
+  const [localColor, setLocalColor] = useState("#000000");
   
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -77,10 +79,12 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
     setIsSubmitting(true);
     const creditAmount = parseInt(defenceCredit, 10) || 0;
     try {
-      await onAddPost(content, contentBangla, file, fileBangla, creditAmount);
+      await onAddPost(content, contentBangla, file, fileBangla, creditAmount, globalColor, localColor);
       setContent("");
       setContentBangla("");
       setDefenceCredit("");
+      setGlobalColor("#000000");
+      setLocalColor("#000000");
       handleRemoveFile('en');
       handleRemoveFile('bn');
     } catch (error) {
@@ -203,7 +207,33 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
           </div>
         </div>
           
-        <div className="flex justify-end items-center">
+        <div className="flex justify-between items-center pt-4">
+          <div className="flex items-center gap-4">
+             <div className="flex items-center gap-2">
+                <Label htmlFor="global-color" className="text-sm text-muted-foreground">Global</Label>
+                 <input 
+                    type="color" 
+                    id="global-color"
+                    value={globalColor}
+                    onChange={(e) => setGlobalColor(e.target.value)}
+                    className="w-8 h-8 p-0 border-none cursor-pointer rounded-md bg-transparent"
+                    disabled={isSubmitting}
+                    title="Global Content Color"
+                 />
+             </div>
+             <div className="flex items-center gap-2">
+                <Label htmlFor="local-color" className="text-sm text-muted-foreground">Local</Label>
+                 <input 
+                    type="color" 
+                    id="local-color"
+                    value={localColor}
+                    onChange={(e) => setLocalColor(e.target.value)}
+                    className="w-8 h-8 p-0 border-none cursor-pointer rounded-md bg-transparent"
+                    disabled={isSubmitting}
+                    title="Local Content Color"
+                 />
+             </div>
+          </div>
           <Button type="submit" disabled={isPostButtonDisabled}>
             {isSubmitting ? "Publishing..." : "Publish"}
           </Button>

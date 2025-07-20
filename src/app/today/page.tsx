@@ -81,6 +81,8 @@ export default function TodayPage() {
     file: File | null,
     fileBangla: File | null,
     defenceCredit: number,
+    globalColor: string,
+    localColor: string,
     postType: 'original' | 'share' = 'original',
     sharedPostId?: string
   ) => {
@@ -121,6 +123,8 @@ export default function TodayPage() {
           ...(mediaURLBangla && { mediaURLBangla }),
           ...(mediaTypeBangla && { mediaTypeBangla }),
           ...(defenceCredit > 0 && { defenceCredit }),
+          ...(globalColor && { globalColor }),
+          ...(localColor && { localColor }),
           ...(postType === 'share' && sharedPostId && { sharedPostId }),
         };
 
