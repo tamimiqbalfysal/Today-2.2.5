@@ -427,97 +427,109 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                     </div>
                  )}
                 
-                <div className="flex items-center justify-between pt-3 border-t border-border">
-                    <div className="flex items-center">
-                        <Button variant="ghost" size="lg" onClick={handleHeartClick} className={cn("flex items-center gap-2", post.likes.includes(currentUser?.uid || '') ? "" : "text-muted-foreground")}>
-                            <Heart className={cn("h-6 w-6", post.likes.includes(currentUser?.uid || '') && "fill-red-500 text-red-500")} />
-                            {post.likes.length > 0 && <span className="text-sm font-semibold">{post.likes.length}</span>}
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setHasLaughed(!hasLaughed)} className={cn(!hasLaughed && "text-muted-foreground")}>
-                             <motion.div whileHover="laughing">
-                                <motion.svg 
-                                    variants={{ laughing: laughAnimation.face }}
-                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
-                                    <circle cx="12" cy="12" r="10" fill={hasLaughed ? '#FFD700' : 'currentColor'} stroke="none" />
-                                    <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke={hasLaughed ? '#333' : 'white'} fill="none" strokeWidth="1.5" />
-                                    <path d="M9 9.5c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5c0 .828-.672 1.5-1.5 1.5S9 10.328 9 9.5z" fill={hasLaughed ? '#333' : 'white'} stroke="none" />
-                                    <path d="M15 9.5c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5c0 .828-.672 1.5-1.5 1.5S15 10.328 15 9.5z" fill={hasLaughed ? '#333' : 'white'} stroke="none" />
-                                    <motion.path variants={{ laughing: laughAnimation.tear }} d="M6.5 11.5C6.5 12.328 7.172 13 8 13s1.5-.672 1.5-1.5c0-.398-.158-.755-.41-1.031" fill={hasLaughed ? '#3498DB' : 'none'} stroke="none" opacity="0"/>
-                                    <motion.path variants={{ laughing: laughAnimation.tear }} d="M17.5 11.5C17.5 12.328 16.828 13 16 13s-1.5-.672 1.5-1.5c0-.398.158-.755.41-1.031" fill={hasLaughed ? '#3498DB' : 'none'} stroke="none" opacity="0"/>
-                                </motion.svg>
-                             </motion.div>
-                        </Button>
-                    </div>
+                <AnimatePresence>
+                    {isExpanded && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3, ease: 'easeOut' }}
+                            className="overflow-hidden"
+                        >
+                            <div className="flex items-center justify-between pt-3 border-t border-border">
+                                <div className="flex items-center">
+                                    <Button variant="ghost" size="lg" onClick={handleHeartClick} className={cn("flex items-center gap-2", post.likes.includes(currentUser?.uid || '') ? "" : "text-muted-foreground")}>
+                                        <Heart className={cn("h-6 w-6", post.likes.includes(currentUser?.uid || '') && "fill-red-500 text-red-500")} />
+                                        {post.likes.length > 0 && <span className="text-sm font-semibold">{post.likes.length}</span>}
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => setHasLaughed(!hasLaughed)} className={cn(!hasLaughed && "text-muted-foreground")}>
+                                        <motion.div whileHover="laughing">
+                                            <motion.svg 
+                                                variants={{ laughing: laughAnimation.face }}
+                                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+                                                <circle cx="12" cy="12" r="10" fill={hasLaughed ? '#FFD700' : 'currentColor'} stroke="none" />
+                                                <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke={hasLaughed ? '#333' : 'white'} fill="none" strokeWidth="1.5" />
+                                                <path d="M9 9.5c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5c0 .828-.672 1.5-1.5 1.5S9 10.328 9 9.5z" fill={hasLaughed ? '#333' : 'white'} stroke="none" />
+                                                <path d="M15 9.5c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5c0 .828-.672 1.5-1.5 1.5S15 10.328 15 9.5z" fill={hasLaughed ? '#333' : 'white'} stroke="none" />
+                                                <motion.path variants={{ laughing: laughAnimation.tear }} d="M6.5 11.5C6.5 12.328 7.172 13 8 13s1.5-.672 1.5-1.5c0-.398-.158-.755-.41-1.031" fill={hasLaughed ? '#3498DB' : 'none'} stroke="none" opacity="0"/>
+                                                <motion.path variants={{ laughing: laughAnimation.tear }} d="M17.5 11.5C17.5 12.328 16.828 13 16 13s-1.5-.672 1.5-1.5c0-.398.158-.755.41-1.031" fill={hasLaughed ? '#3498DB' : 'none'} stroke="none" opacity="0"/>
+                                            </motion.svg>
+                                        </motion.div>
+                                    </Button>
+                                </div>
 
-                    <div className="flex items-center justify-end gap-x-2">
-                        <Button variant="ghost" size="icon" onClick={() => setIsShareDialogOpen(true)} disabled={!currentUser}>
-                            <Share2 className="h-6 w-6" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                            <Star className="h-6 w-6" />
-                        </Button>
-                        
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <Trash2 className="h-6 w-6" />
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription asChild>
-                                    <div className="space-y-4">
-                                        <div>
-                                          {isAuthor 
-                                            ? "This action cannot be undone. This will permanently delete this post." 
-                                            : "This action will make this post private, so only the author can see it."}
-                                        </div>
-                                        {defenceCreditValue > 0 && !isAuthor && (
-                                            <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-md">
-                                                <div className="text-sm text-yellow-900 dark:text-yellow-200 flex items-center gap-2">
-                                                    <Shield className="h-4 w-4" />
-                                                    This post has a Defence Credit of <span className="font-bold">{defenceCreditValue}</span>.
+                                <div className="flex items-center justify-end gap-x-2">
+                                    <Button variant="ghost" size="icon" onClick={() => setIsShareDialogOpen(true)} disabled={!currentUser}>
+                                        <Share2 className="h-6 w-6" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon">
+                                        <Star className="h-6 w-6" />
+                                    </Button>
+                                    
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <Trash2 className="h-6 w-6" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription asChild>
+                                                <div className="space-y-4">
+                                                    <div>
+                                                    {isAuthor 
+                                                        ? "This action cannot be undone. This will permanently delete this post." 
+                                                        : "This action will make this post private, so only the author can see it."}
+                                                    </div>
+                                                    {defenceCreditValue > 0 && !isAuthor && (
+                                                        <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-md">
+                                                            <div className="text-sm text-yellow-900 dark:text-yellow-200 flex items-center gap-2">
+                                                                <Shield className="h-4 w-4" />
+                                                                This post has a Defence Credit of <span className="font-bold">{defenceCreditValue}</span>.
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {!isAuthor && (
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="offence-credit">Offence Credit</Label>
+                                                            <Input 
+                                                                id="offence-credit"
+                                                                type="number"
+                                                                placeholder={`Enter more than ${defenceCreditValue}`}
+                                                                value={offenceCredit}
+                                                                onChange={(e) => setOffenceCredit(e.target.value)}
+                                                            />
+                                                            {!hasEnoughOffenceCredits && offenceCreditValue > 0 && (
+                                                                <p className="text-xs text-destructive flex items-center justify-start gap-1">
+                                                                    <AlertTriangle className="h-3 w-3" />
+                                                                    You don't have enough credits.
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        )}
-                                        {!isAuthor && (
-                                            <div className="space-y-2">
-                                                <Label htmlFor="offence-credit">Offence Credit</Label>
-                                                <Input 
-                                                    id="offence-credit"
-                                                    type="number"
-                                                    placeholder={`Enter more than ${defenceCreditValue}`}
-                                                    value={offenceCredit}
-                                                    onChange={(e) => setOffenceCredit(e.target.value)}
-                                                />
-                                                {!hasEnoughOffenceCredits && offenceCreditValue > 0 && (
-                                                    <p className="text-xs text-destructive flex items-center justify-start gap-1">
-                                                        <AlertTriangle className="h-3 w-3" />
-                                                        You don't have enough credits.
-                                                    </p>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    onClick={isAuthor ? handleDeleteClick : handleMakePrivateClick}
-                                    disabled={!isAuthor && (!isOffenceCreditSufficient || !hasEnoughOffenceCredits)}
-                                >
-                                    Delete
-                                </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                                            </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction
+                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                onClick={isAuthor ? handleDeleteClick : handleMakePrivateClick}
+                                                disabled={!isAuthor && (!isOffenceCreditSufficient || !hasEnoughOffenceCredits)}
+                                            >
+                                                Delete
+                                            </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
 
-                    </div>
-                </div>
-
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                
                 <div className="flex flex-col items-center justify-center pt-3 mt-3 border-t border-border">
                     <AnimatePresence>
                         {isExpanded && (
