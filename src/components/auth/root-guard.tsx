@@ -17,7 +17,6 @@ const PROTECTED_ROUTES = [
   '/thank-you',
   '/marketplace',
   '/tribe',
-  '/checkout'
 ];
 
 // Dynamic routes that are protected.
@@ -33,6 +32,8 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
                            DYNAMIC_PROTECTED_ROUTES_PREFIX.some(p => pathname.startsWith(p));
   
   const showHeader = !['/login', '/signup'].includes(pathname);
+  const showCart = user || ['/attom', '/checkout'].some(p => pathname.startsWith(p));
+
 
   if (isProtectedRoute) {
     return (
@@ -50,12 +51,8 @@ export function RootGuard({ children }: { children: React.ReactNode }) {
     <>
       {showHeader && <Header />}
       {children}
-      {user && (
-          <>
-            <FloatingCounterButton />
-            <FloatingCartButton />
-          </>
-      )}
+      {user && <FloatingCounterButton />}
+      {showCart && <FloatingCartButton />}
     </>
   );
 }
