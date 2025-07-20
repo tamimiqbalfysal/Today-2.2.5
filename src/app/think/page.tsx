@@ -65,37 +65,32 @@ export default function ThinkPage() {
   
   const maxParticipants = 100;
 
-  useEffect(() => {
-    if (user) {
-      setName(user.name || '');
-      setEmail(user.email || '');
-    }
-  }, [user]);
-
-  const checkRegistration = useCallback(async () => {
+  const checkRegistrationStatus = useCallback(async () => {
     if (!db) return;
 
     let checkEmail = user?.email;
-
     if (!checkEmail && typeof window !== 'undefined') {
         checkEmail = localStorage.getItem('thinkCourseEmail');
     }
-    
+
     if (checkEmail) {
         try {
             const q = query(collection(db, "think_free_class_registrations"), where("email", "==", checkEmail));
             const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                setIsRegistered(true);
-            } else {
-                setIsRegistered(false);
-            }
+            setIsRegistered(!querySnapshot.empty);
         } catch (error) {
             console.error("Failed to check registration", error);
             setIsRegistered(false);
         }
     } else {
         setIsRegistered(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setEmail(user.email || '');
     }
   }, [user]);
   
@@ -120,13 +115,13 @@ export default function ThinkPage() {
         console.error("Error fetching registrations count:", error);
     });
     
-    checkRegistration().finally(() => setIsLoading(false));
+    checkRegistrationStatus().finally(() => setIsLoading(false));
 
     return () => {
       unsubscribeCourse();
       unsubscribeRegistrations();
     };
-  }, [authLoading, checkRegistration]);
+  }, [authLoading, checkRegistrationStatus]);
 
   const handleRegister = async () => {
     if (!db) {
@@ -142,6 +137,7 @@ export default function ThinkPage() {
     try {
       if (registrations >= maxParticipants && !isRegistered) {
         toast({ variant: 'destructive', title: 'Registration Full', description: 'The course has reached its maximum number of participants.' });
+        setIsSubmitting(false);
         return;
       }
       
@@ -150,11 +146,12 @@ export default function ThinkPage() {
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        toast({ variant: 'destructive', title: 'Already Registered', description: 'This email address has already been used to register for the course.' });
+        toast({ title: 'Already Registered', description: 'This email address is already registered.' });
         setIsRegistered(true);
         if (typeof window !== 'undefined' && !user) {
             localStorage.setItem('thinkCourseEmail', email.trim());
         }
+        setIsSubmitting(false);
         return;
       }
 
