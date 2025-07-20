@@ -11,17 +11,24 @@ import { Separator } from "../ui/separator";
 import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { cn } from "@/lib/utils";
 
 interface CreatePostFormProps {
   user: User;
   onAddPost: (content: string, contentBangla: string, file: File | null, fileBangla: File | null, defenceCredit: number, localColor: string) => Promise<void>;
 }
 
+const languageColors = [
+  { name: 'Bangla', color: '#252e8a' },
+  { name: 'Hindi', color: '#d9666d' },
+  { name: 'Red', color: '#c0392b' },
+];
+
 export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
   const [content, setContent] = useState("");
   const [contentBangla, setContentBangla] = useState("");
   const [defenceCredit, setDefenceCredit] = useState("");
-  const [localColor, setLocalColor] = useState("#000000");
+  const [localColor, setLocalColor] = useState(languageColors[0].color);
   
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -82,7 +89,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
       setContent("");
       setContentBangla("");
       setDefenceCredit("");
-      setLocalColor("#000000");
+      setLocalColor(languageColors[0].color);
       handleRemoveFile('en');
       handleRemoveFile('bn');
     } catch (error) {
@@ -207,18 +214,19 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
           
         <div className="flex justify-between items-center pt-4">
           <div className="flex items-center gap-4">
-             <div className="flex items-center gap-2">
-                <Label htmlFor="local-color" className="text-sm text-muted-foreground">Language</Label>
-                 <input 
-                    type="color" 
-                    id="local-color"
-                    value={localColor}
-                    onChange={(e) => setLocalColor(e.target.value)}
-                    className="w-8 h-8 p-0 border-none cursor-pointer rounded-md bg-transparent"
-                    disabled={isSubmitting}
-                    title="Language Content Color"
-                 />
-             </div>
+            {languageColors.map((lang) => (
+              <Button
+                key={lang.name}
+                type="button"
+                variant={localColor === lang.color ? 'default' : 'ghost'}
+                onClick={() => setLocalColor(lang.color)}
+                className="flex items-center gap-2"
+                disabled={isSubmitting}
+              >
+                <span className="w-4 h-4 rounded-full" style={{ backgroundColor: lang.color }} />
+                <span className={cn(localColor !== lang.color && "text-muted-foreground")}>{lang.name}</span>
+              </Button>
+            ))}
           </div>
           <Button type="submit" disabled={isPostButtonDisabled}>
             {isSubmitting ? "Publishing..." : "Publish"}
