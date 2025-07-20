@@ -181,10 +181,6 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
     const authorInitial = post.authorName ? post.authorName.charAt(0) : 'U';
     const { toast } = useToast();
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-
-    const hasSaved = useMemo(() => 
-        currentUser && post.likes ? post.likes.includes(currentUser.uid) : false,
-    [post, currentUser]);
     
     const [isExpanded, setIsExpanded] = useState(false);
     const [commentText, setCommentText] = useState("");
@@ -197,12 +193,8 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
         onLike(post.id, post.authorId);
     };
     
-    const handleSaveClick = () => {
+    const handleCommentClick = () => {
         setIsExpanded(prev => !prev);
-        if (!hasSaved) {
-            if (!currentUser || !onLike) return;
-            onLike(post.id, post.authorId);
-        }
     };
 
     const handleCommentPost = async () => {
@@ -427,6 +419,9 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                     <div className="flex items-center">
                         <Button variant="ghost" size="lg" onClick={handleHeartClick} className={cn("flex items-center gap-2", post.likes.includes(currentUser?.uid || '') ? "" : "text-muted-foreground")}>
                             <Heart className={cn("h-6 w-6", post.likes.includes(currentUser?.uid || '') && "fill-red-500 text-red-500")} />
+                            {post.likes && post.likes.length > 0 && (
+                                <span className="font-semibold text-sm">{post.likes.length}</span>
+                            )}
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => setHasLaughed(!hasLaughed)} className={cn(!hasLaughed && "text-muted-foreground")}>
                             <motion.div whileHover="laughing">
@@ -558,18 +553,14 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
                 
                 <div className="flex flex-col items-center justify-center pt-3 mt-3">
                     <Button 
-                      variant={hasSaved ? "default" : "outline"}
-                      className={cn(
-                          "w-full text-base",
-                           hasSaved && "bg-black text-white hover:bg-black/90",
-                           !hasSaved && "bg-white text-black hover:bg-neutral-100 border-black"
-                      )}
-                      onClick={handleSaveClick}
-                      disabled={!currentUser || isAuthor}
+                      variant="outline"
+                      className="w-full text-base bg-white text-black hover:bg-neutral-100 border-black"
+                      onClick={handleCommentClick}
+                      disabled={!currentUser}
                     >
-                        <span className="font-semibold">{hasSaved ? 'Saved' : 'Save'}</span>
-                         {post.likes && post.likes.length > 0 && (
-                            <span className="ml-2 font-semibold">{post.likes.length}</span>
+                        <span className="font-semibold">Comment</span>
+                         {post.comments && post.comments.length > 0 && (
+                            <span className="ml-2 font-semibold">{post.comments.length}</span>
                         )}
                     </Button>
                 </div>
