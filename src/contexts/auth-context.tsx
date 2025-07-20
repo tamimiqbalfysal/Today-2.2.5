@@ -143,11 +143,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             photoURL: photoURL
         });
 
+        // Fetch all existing users to make them followers of the new user
+        const usersCollectionRef = collection(db, 'users');
+        const allUsersSnapshot = await getDocs(usersCollectionRef);
+        const allUserIds = allUsersSnapshot.docs.map(doc => doc.id);
+
         const newUserDocRef = doc(db, "users", firebaseUser.uid);
         const newUsernameDocRef = doc(db, 'usernames', username.toLowerCase());
 
         const batch = writeBatch(db);
 
+        // Set up the new user document
         batch.set(newUserDocRef, {
             uid: firebaseUser.uid,
             name: name,
@@ -159,8 +165,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             redeemedThinkCodes: 0,
             credits: 0,
             unreadNotifications: false,
-            followers: [], 
-            following: [], 
+            followers: allUserIds, // The new user is now followed by all existing users
+            following: [], // New user starts by following no one
+        });
+
+        // Update all existing users to follow the new user
+        allUsersSnapshot.docs.forEach(userDoc => {
+            const userRef = doc(db, 'users', userDoc.id);
+            batch.update(userRef, {
+                following: arrayUnion(firebaseUser.uid)
+            });
         });
 
         batch.set(newUsernameDocRef, { uid: firebaseUser.uid });
