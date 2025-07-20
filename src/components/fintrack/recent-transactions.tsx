@@ -245,8 +245,8 @@ function PostCard({ post: initialPost, currentUser, onDelete, onMakePostPrivate,
     const isOffenceCreditSufficient = offenceCreditValue > defenceCreditValue;
     const isRepublishCreditSufficient = newDefenceCreditValue > lastOffenceCreditValue;
 
-    const hasLiked = post.likes.includes(currentUser?.uid || '');
-    const hasLaughed = post.laughs.includes(currentUser?.uid || '');
+    const hasLiked = (post.likes || []).includes(currentUser?.uid || '');
+    const hasLaughed = (post.laughs || []).includes(currentUser?.uid || '');
 
     const handleDeleteClick = () => {
         if (onDelete) {
