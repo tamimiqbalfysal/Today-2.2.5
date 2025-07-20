@@ -205,7 +205,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
           
         <div className="flex justify-end items-center">
           <Button type="submit" disabled={isPostButtonDisabled}>
-            {isSubmitting ? "Posting..." : "Post"}
+            {isSubmitting ? "Publishing..." : "Publish"}
           </Button>
         </div>
       </form>
