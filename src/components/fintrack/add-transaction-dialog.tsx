@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef } from "react";
@@ -139,7 +138,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
             {/* English Post Area */}
             <div>
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-2">
-                <Languages className="h-4 w-4" /> English Content
+                <Languages className="h-4 w-4" /> Global
               </label>
               <Textarea
                 placeholder={`What's happening, ${user.name}?`}
@@ -173,7 +172,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
             {/* Bangla Post Area */}
             <div>
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-2">
-                <Languages className="h-4 w-4" /> Bangla Content
+                <Languages className="h-4 w-4" /> Local
               </label>
               <Textarea
                 placeholder={`বাংলায় কী ঘটছে?`}
