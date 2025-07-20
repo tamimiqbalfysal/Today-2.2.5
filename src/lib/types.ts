@@ -21,6 +21,7 @@ export interface User {
   unreadNotifications?: boolean;
   followers?: string[]; // Array of user UIDs
   following?: string[]; // Array of user UIDs
+  defaultLocalColor?: string;
 }
 
 export interface Post {

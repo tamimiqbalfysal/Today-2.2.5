@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +13,8 @@ import { CardHeader, CardTitle, CardDescription, CardContent } from "@/component
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { useAuth } from "@/contexts/auth-context";
 
 interface CreatePostFormProps {
   user: User;
@@ -25,10 +28,11 @@ const languageColors = [
 ];
 
 export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
+  const { updateUserPreferences } = useAuth();
   const [content, setContent] = useState("");
   const [contentBangla, setContentBangla] = useState("");
   const [defenceCredit, setDefenceCredit] = useState("");
-  const [localColor, setLocalColor] = useState(languageColors[0].color);
+  const [localColor, setLocalColor] = useState(user.defaultLocalColor || languageColors[0].color);
   
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -41,6 +45,11 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
   const fileInputBanglaRef = useRef<HTMLInputElement>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    setLocalColor(user.defaultLocalColor || languageColors[0].color);
+  }, [user.defaultLocalColor]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, lang: 'en' | 'bn') => {
     const selectedFile = event.target.files?.[0];
@@ -89,7 +98,6 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
       setContent("");
       setContentBangla("");
       setDefenceCredit("");
-      setLocalColor(languageColors[0].color);
       handleRemoveFile('en');
       handleRemoveFile('bn');
     } catch (error) {
@@ -97,6 +105,12 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleColorSelect = (color: string) => {
+    setLocalColor(color);
+    updateUserPreferences({ defaultLocalColor: color });
+    setIsPopoverOpen(false);
   };
 
   const userInitial = user.name ? user.name.charAt(0) : "🥳";
@@ -144,7 +158,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
             <AvatarFallback className="bg-secondary text-secondary-foreground">{userInitial}</AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-4">
-            {/* English Post Area */}
+            {/* Global Post Area */}
             <div>
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-2">
                 <Languages className="h-4 w-4" /> Global
@@ -178,7 +192,7 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
 
             <Separator />
 
-            {/* Bangla Post Area */}
+            {/* Local Post Area */}
             <div>
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-2">
                 <Languages className="h-4 w-4" /> Local
@@ -213,21 +227,36 @@ export function CreatePostForm({ user, onAddPost }: CreatePostFormProps) {
         </div>
           
         <div className="flex justify-between items-center pt-4">
-          <div className="flex items-center gap-4">
-            {languageColors.map((lang) => (
+          <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+            <PopoverTrigger asChild>
               <Button
-                key={lang.name}
                 type="button"
-                variant={localColor === lang.color ? 'default' : 'ghost'}
-                onClick={() => setLocalColor(lang.color)}
+                variant="ghost"
                 className="flex items-center gap-2"
                 disabled={isSubmitting}
               >
-                <span className="w-4 h-4 rounded-full" style={{ backgroundColor: lang.color }} />
-                <span className={cn(localColor !== lang.color && "text-muted-foreground")}>{lang.name}</span>
+                <span className="w-4 h-4 rounded-full" style={{ backgroundColor: localColor }} />
+                Language
               </Button>
-            ))}
-          </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-2">
+              <div className="flex items-center gap-2">
+                {languageColors.map((lang) => (
+                  <Button
+                    key={lang.name}
+                    type="button"
+                    variant={localColor === lang.color ? 'default' : 'ghost'}
+                    onClick={() => handleColorSelect(lang.color)}
+                    className="flex items-center gap-2"
+                  >
+                    <span className="w-4 h-4 rounded-full" style={{ backgroundColor: lang.color }} />
+                    <span className={cn(localColor !== lang.color && "text-muted-foreground")}>{lang.name}</span>
+                  </Button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <Button type="submit" disabled={isPostButtonDisabled}>
             {isSubmitting ? "Publishing..." : "Publish"}
           </Button>

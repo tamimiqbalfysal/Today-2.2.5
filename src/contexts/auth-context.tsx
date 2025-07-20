@@ -18,6 +18,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   signup: (name: string, username: string, email: string, password: string, country: string) => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
+  updateUserPreferences: (prefs: Partial<AppUser>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -81,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               unreadNotifications: unreadNotifications,
               followers: userData.followers || [],
               following: userData.following || [],
+              defaultLocalColor: userData.defaultLocalColor,
             });
             setLoading(false);
           }, (error) => {
@@ -265,8 +267,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUserPreferences = async (prefs: Partial<AppUser>) => {
+    if (!user || !db) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to update preferences.' });
+        return;
+    }
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, prefs);
+        toast({ title: 'Success', description: 'Your preferences have been updated.' });
+    } catch (error: any) {
+        console.error('Error updating preferences:', error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not update your preferences.' });
+    }
+  };
 
-  const value = { user, loading, login, logout, signup, deleteAccount };
+
+  const value = { user, loading, login, logout, signup, deleteAccount, updateUserPreferences };
 
   return (
     <AuthContext.Provider value={value}>
