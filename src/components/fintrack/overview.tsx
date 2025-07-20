@@ -13,7 +13,6 @@ interface ProfileCardProps {
 
 export function ProfileCard({ user, isOwnProfile = false, isFollowing, onFollowToggle }: ProfileCardProps) {
   const followersCount = user.followers?.length ?? 0;
-  const followingCount = user.following?.length ?? 0;
 
   return (
     <Card className="w-full">
@@ -33,34 +32,28 @@ export function ProfileCard({ user, isOwnProfile = false, isFollowing, onFollowT
         )}
       </CardHeader>
       <CardContent>
-        <div className="flex justify-around text-center text-sm text-muted-foreground border-t pt-4">
+        <div className="flex justify-around items-center text-center text-sm text-muted-foreground border-t pt-4">
             <div className="space-y-1">
                 <p className="font-bold text-lg text-foreground">{followersCount}</p>
                 <p>Followers</p>
             </div>
-            <div className="space-y-1">
-                <p className="font-bold text-lg text-foreground">{followingCount}</p>
-                <p>Following</p>
-            </div>
+            {!isOwnProfile && onFollowToggle && (
+                 <Button className="w-28" onClick={onFollowToggle} variant={isFollowing ? "outline" : "default"}>
+                    {isFollowing ? (
+                        <>
+                            <UserMinus className="mr-2 h-4 w-4" />
+                            Unfollow
+                        </>
+                    ) : (
+                        <>
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Follow
+                        </>
+                    )}
+                </Button>
+            )}
         </div>
       </CardContent>
-      {!isOwnProfile && onFollowToggle && (
-        <CardFooter>
-            <Button className="w-full" onClick={onFollowToggle} variant={isFollowing ? "outline" : "default"}>
-                {isFollowing ? (
-                    <>
-                        <UserMinus className="mr-2 h-4 w-4" />
-                        Unfollow
-                    </>
-                ) : (
-                    <>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Follow
-                    </>
-                )}
-            </Button>
-        </CardFooter>
-      )}
     </Card>
   );
 }
