@@ -46,7 +46,7 @@ export function ProfileCard({ user, isOwnProfile = false, isFollowing, onFollowT
       </CardContent>
       {!isOwnProfile && onFollowToggle && (
         <CardFooter>
-            <Button className="w-full" onClick={onFollowToggle} variant={isFollowing ? "destructive" : "default"}>
+            <Button className="w-full" onClick={onFollowToggle} variant={isFollowing ? "outline" : "default"}>
                 {isFollowing ? (
                     <>
                         <UserMinus className="mr-2 h-4 w-4" />
